@@ -1,201 +1,311 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskJunior</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #007bff;
-            --primary-dark: #0056b3;
-            --accent: #ff6b6b;
-            --bg: #f4f4f4;
-            --card-bg: #ffffff;
-            --text: #333333;
-            --border-radius: 12px;
-            --transition: all 0.3s ease;
-        }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>TaskJunior</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet"/>
+  <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <style>
+    :root {
+      --primary-gradient: linear-gradient(135deg, #4f46e5, #9333ea);
+      --secondary-gradient: linear-gradient(135deg, #6366f1, #8b5cf6);
+      --dark-bg: #0f172a;
+      --light-bg: #f8fafc;
+      --card-bg: rgba(255, 255, 255, 0.05);
+      --text-light: #f8fafc;
+      --text-dark: #1e293b;
+      --radius: 16px;
+      --transition: all 0.3s ease;
+    }
 
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-        }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--light-bg);
+      color: var(--text-dark);
+      transition: var(--transition);
+    }
 
-        header {
-            background: linear-gradient(135deg, var(--primary), #0096ff);
-            color: white;
-            padding: 40px 20px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-        }
+    body.dark-theme {
+      background: var(--dark-bg);
+      color: var(--text-light);
+    }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 40px 20px;
-        }
+    .gradient-text {
+      font-size: 3rem;
+      position: relative;
+      padding: 8px 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      background: var(--primary-gradient);
+      -webkit-text-fill-color: transparent;
+    }
 
-        h1, h2 {
-            margin: 20px 0 10px;
-            font-weight: 800;
-            color: var(--primary);
-        }
+    @supports not (-webkit-text-fill-color: transparent) {
+      .gradient-text {
+        color: #4f46e5;
+        background: none;
+        text-shadow: 0 0 1px rgba(147, 51, 234, 0.3);
+      }
+    }
 
-        p {
-            margin-bottom: 20px;
-        }
+    .gradient-text::before {
+      content: "";
+      position: absolute;
+      top: -5px;
+      left: -10px;
+      right: -10px;
+      bottom: -5px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      z-index: -1;
+      backdrop-filter: blur(2px);
+    }
 
-        ul {
-            list-style-type: none;
-            padding: 0;
-            margin-bottom: 40px;
-        }
+    header {
+      padding: 60px 20px 40px;
+      text-align: center;
+      background: var(--primary-gradient);
+      color: white;
+    }
 
-        ul li::before {
-            content: "✨";
-            margin-right: 10px;
-        }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
 
-        .features {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
-            margin: 40px 0;
-        }
+    .hero {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 40px;
+      align-items: center;
+      margin-bottom: 80px;
+    }
 
-        .feature-card {
-            background: var(--card-bg);
-            padding: 30px;
-            border-radius: var(--border-radius);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
-            transition: var(--transition);
-            border-left: 5px solid var(--accent);
-        }
+    .hero-content h1 {
+      font-size: 3rem;
+      line-height: 1.2;
+      margin-bottom: 20px;
+    }
 
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
-        }
+    .hero-buttons {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 30px;
+    }
 
-        .buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin: 40px 0;
-        }
+    .btn {
+      padding: 14px 30px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 1rem;
+      text-decoration: none;
+      text-align: center;
+      background: var(--secondary-gradient);
+      color: white;
+      box-shadow: 0 8px 20px rgba(147, 51, 234, 0.3);
+      transition: var(--transition);
+    }
 
-        button {
-            flex: 1 1 auto;
-            max-width: 300px;
-            padding: 15px 25px;
-            border: none;
-            border-radius: var(--border-radius);
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white;
-            font-size: 1.1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: var(--transition);
-            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-        }
+    .btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 25px rgba(147, 51, 234, 0.4);
+    }
 
-        button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
-        }
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 30px;
+      margin-bottom: 80px;
+    }
 
-        .contact-list li {
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
+    .feature {
+      background: rgba(79, 70, 229, 0.05);
+      border-radius: var(--radius);
+      padding: 30px;
+      transition: var(--transition);
+      backdrop-filter: blur(10px);
+    }
 
-        .contact-list li::before {
-            content: "";
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--accent);
-            margin-right: 15px;
-        }
+    .feature:hover {
+      transform: translateY(-10px);
+    }
 
-        footer {
-            background: #1a1a1a;
-            color: #bbbbbb;
-            text-align: center;
-            padding: 30px 20px;
-            font-size: 0.9rem;
-            margin-top: 60px;
-        }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--secondary-gradient);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
 
-        .highlight {
-            color: var(--accent);
-            font-weight: 600;
-        }
+    .feature-icon svg {
+      width: 20px;
+      height: 20px;
+      fill: white;
+    }
 
-        @media (max-width: 768px) {
-            .feature-card {
-                border-left: none;
-                border-top: 5px solid var(--accent);
-            }
-        }
-    </style>
+    .footer {
+      background: var(--dark-bg);
+      color: #94a3b8;
+      padding: 40px 20px;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--secondary-gradient);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(147, 51, 234, 0.4);
+      transition: var(--transition);
+    }
+
+    .theme-toggle:hover {
+      transform: rotate(90deg);
+    }
+
+    .theme-toggle svg {
+      width: 24px;
+      height: 24px;
+      fill: white;
+    }
+
+    @media (max-width: 768px) {
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding: 40px 20px;
+      }
+
+      .hero-content h1 {
+        font-size: 2.2rem;
+      }
+
+      .feature {
+        padding: 20px;
+      }
+    }
+  </style>
 </head>
-<body>
+<body id="app">
+  <button class="theme-toggle" @click="toggleTheme" aria-label="Переключить тему">
+    <svg id="themeIcon" viewBox="0 0 24 24">
+      <path :d="isDark ? 
+        'M12 17a5 5 0 100-10 5 5 0 000 10zm0 2a7 7 0 110-14 7 7 0 010 14z' : 
+        'M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z'"/>
+    </svg>
+  </button>
 
-<header>
-    <h1>Управляй своими проектами с TaskJunior</h1>
-    <p class="tagline">Интеллектуальное управление проектами для современных команд</p>
-</header>
+  <header>
+    <div class="container">
+      <img 
+        src="/logo.png" 
+        alt="TaskJunior Logo" 
+        style="width: 120px; height: auto; margin-bottom: 20px;"
+      />
+      <p class="tagline" style="font-size: 1.2rem; opacity: 0.8;">
+        Профессиональное управление проектами для современных команд
+      </p>
+    </div>
+  </header>
 
-<div class="container">
-    <p>Добро пожаловать на TaskJunior — вашу платформу для <span class="highlight">эффективного управления проектами</span>! Здесь вы можете легко создавать доски задач, назначать задачи команде и отслеживать прогресс выполнения проектов в реальном времени. Упрощайте свою работу и достигайте больших результатов!</p>
+  <section class="hero">
+    <div class="container hero-content">
+      <h1>Организуйте свою работу эффективно с помощью TaskJunior</h1>
+      <p style="font-size: 1.1rem; opacity: 0.8;">
+        Интуитивно понятный инструмент управления проектами для современных команд
+      </p>
+      <div class="hero-buttons">
+        <a class="btn" href="register.html">Регистрация</a>
+        <a class="btn" href="login.html">Вход</a>
+      </div>
+    </div>
+    <div class="container">
+      <img 
+        src="https://via.placeholder.com/600x400?text=Task+Management" 
+        alt="Task Management" 
+        style="width: 100%; border-radius: 20px; box-shadow: 0 10px 30px rgba(147, 51, 234, 0.2);"
+      />
+    </div>
+  </section>
 
-    <h2>Функционал платформы:</h2>
+  <section class="container">
+    <h2 style="text-align: center; margin-bottom: 40px; font-size: 2rem;">Основные возможности</h2>
     <div class="features">
-        <div class="feature-card">
-            <h3>Создание досок</h3>
-            <p>Быстро организуйте задачи по проектам и этапам с интуитивно понятным интерфейсом.</p>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M9 5h6a2 2 0 012 2v8a2 2 0 01-2 2H9a2 2 0 01-2-2V7a2 2 0 012-2z"/>
+          </svg>
         </div>
-        <div class="feature-card">
-            <h3>Назначение задач</h3>
-            <p>Распределяйте задачи среди членов команды и устанавливайте приоритеты с помощью удобного менеджера задач.</p>
+        <h3 style="margin-bottom: 15px; color: #4f46e5;">Гибкие доски</h3>
+        <p>Создавайте интерактивные доски для управления задачами и проектами</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M17 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V5a2 2 0 00-2-2z"/>
+          </svg>
         </div>
-        <div class="feature-card">
-            <h3>Отслеживание прогресса</h3>
-            <p>Следите за выполнением задач и общим состоянием проекта с помощью визуальных аналитических инструментов.</p>
+        <h3 style="margin-bottom: 15px; color: #4f46e5;">Назначение задач</h3>
+        <p>Легко распределяйте задачи между членами команды и отслеживайте прогресс</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24">
+            <path d="M12 2a10 10 0 1010 10A10 10 0 0012 2zm0 18a8 8 0 118-8 8 8 0 010 16z"/>
+          </svg>
         </div>
+        <h3 style="margin-bottom: 15px; color: #4f46e5;">Аналитика</h3>
+        <p>Получайте подробную статистику и визуализацию прогресса проектов</p>
+      </div>
     </div>
+  </section>
 
-    <h2>Начните прямо сейчас!</h2>
-    <div class="buttons">
-        <button onclick="window.location.href='register.html'">Регистрация</button>
-        <button onclick="window.location.href='login.html'">Авторизация</button>
-        <button onclick="window.location.href='dashboard.html'">Вход в личный кабинет</button>
-    </div>
+  <footer class="footer">
+    <p>&copy; 2025 TaskJunior. Все права защищены.</p>
+  </footer>
 
-    <h2>О сервисе</h2>
-    <p>TaskJunior разработан для того, чтобы помочь вам и вашей команде <span class="highlight">эффективно организовать работу</span> и достичь поставленных целей. Интуитивно понятный интерфейс и мощный функционал делают процесс управления проектами простым и удобным.</p>
+  <script>
+    const { createApp } = Vue;
 
-    <h2>Контакты создателей</h2>
-    <p>Если у вас есть вопросы или предложения, свяжитесь с нами:</p>
-    <ul class="contact-list">
-        <li>Электронная почта: support@example.com</li>
-        <li>Телефон: +1 (234) 567-890</li>
-        <li>Instagram: @example</li>
-        <li>Facebook: /example</li>
-    </ul>
-</div>
-
-<footer>
-    <p>&copy; 2025 TaskJunior. Все права защищены. У вас есть только обязанности.</p>
-    <p>Создано с ❤️ для ваших проектов</p>
-</footer>
-
+    createApp({
+      data() {
+        return {
+          isDark: false
+        };
+      },
+      mounted() {
+        const savedTheme = localStorage.getItem('theme');
+        if (savedTheme === 'dark') {
+          this.isDark = true;
+          document.body.classList.add('dark-theme');
+        }
+      },
+      methods: {
+        toggleTheme() {
+          this.isDark = !this.isDark;
+          document.body.classList.toggle('dark-theme', this.isDark);
+          localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+        }
+      }
+    }).mount('#app');
+  </script>
 </body>
 </html>
