@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskJunior</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #007bff;
+            --primary-dark: #0056b3;
+            --accent: #ff6b6b;
+            --bg: #f4f4f4;
+            --card-bg: #ffffff;
+            --text: #333333;
+            --border-radius: 12px;
+            --transition: all 0.3s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), #0096ff);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1, h2 {
+            margin: 20px 0 10px;
+            font-weight: 800;
+            color: var(--primary);
+        }
+
+        p {
+            margin-bottom: 20px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+            margin-bottom: 40px;
+        }
+
+        ul li::before {
+            content: "✨";
+            margin-right: 10px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+            border-left: 5px solid var(--accent);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin: 40px 0;
+        }
+
+        button {
+            flex: 1 1 auto;
+            max-width: 300px;
+            padding: 15px 25px;
+            border: none;
+            border-radius: var(--border-radius);
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 123, 255, 0.4);
+        }
+
+        .contact-list li {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact-list li::before {
+            content: "";
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin-right: 15px;
+        }
+
+        footer {
+            background: #1a1a1a;
+            color: #bbbbbb;
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 0.9rem;
+            margin-top: 60px;
+        }
+
+        .highlight {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        @media (max-width: 768px) {
+            .feature-card {
+                border-left: none;
+                border-top: 5px solid var(--accent);
+            }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Управляй своими проектами с TaskJunior</h1>
+    <p class="tagline">Интеллектуальное управление проектами для современных команд</p>
+</header>
+
+<div class="container">
+    <p>Добро пожаловать на TaskJunior — вашу платформу для <span class="highlight">эффективного управления проектами</span>! Здесь вы можете легко создавать доски задач, назначать задачи команде и отслеживать прогресс выполнения проектов в реальном времени. Упрощайте свою работу и достигайте больших результатов!</p>
+
+    <h2>Функционал платформы:</h2>
+    <div class="features">
+        <div class="feature-card">
+            <h3>Создание досок</h3>
+            <p>Быстро организуйте задачи по проектам и этапам с интуитивно понятным интерфейсом.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Назначение задач</h3>
+            <p>Распределяйте задачи среди членов команды и устанавливайте приоритеты с помощью удобного менеджера задач.</p>
+        </div>
+        <div class="feature-card">
+            <h3>Отслеживание прогресса</h3>
+            <p>Следите за выполнением задач и общим состоянием проекта с помощью визуальных аналитических инструментов.</p>
+        </div>
+    </div>
+
+    <h2>Начните прямо сейчас!</h2>
+    <div class="buttons">
+        <button onclick="window.location.href='register.html'">Регистрация</button>
+        <button onclick="window.location.href='login.html'">Авторизация</button>
+        <button onclick="window.location.href='dashboard.html'">Вход в личный кабинет</button>
+    </div>
+
+    <h2>О сервисе</h2>
+    <p>TaskJunior разработан для того, чтобы помочь вам и вашей команде <span class="highlight">эффективно организовать работу</span> и достичь поставленных целей. Интуитивно понятный интерфейс и мощный функционал делают процесс управления проектами простым и удобным.</p>
+
+    <h2>Контакты создателей</h2>
+    <p>Если у вас есть вопросы или предложения, свяжитесь с нами:</p>
+    <ul class="contact-list">
+        <li>Электронная почта: support@example.com</li>
+        <li>Телефон: +1 (234) 567-890</li>
+        <li>Instagram: @example</li>
+        <li>Facebook: /example</li>
+    </ul>
+</div>
+
+<footer>
+    <p>&copy; 2025 TaskJunior. Все права защищены. У вас есть только обязанности.</p>
+    <p>Создано с ❤️ для ваших проектов</p>
+</footer>
+
+</body>
+</html>
