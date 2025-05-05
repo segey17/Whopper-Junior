@@ -253,7 +253,7 @@
         </ul>
     </div>
     <footer>
-        <p>&copy; 2025 TaskJunior. Все права защищены.</p>
+        <p>&copy; 2025 TaskJunior. У вас нет прав.</p>
     </footer>
     <script>
         const { createApp } = Vue;
