@@ -1,0 +1,204 @@
+/* Сброс стилей */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* Шапка */
+header {
+    background-color: var(--header-bg);
+    color: var(--header-text);
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+header h1 {
+    margin: 0;
+}
+
+header nav ul {
+    list-style: none;
+    display: flex;
+}
+
+header nav ul li {
+    margin-left: 20px;
+}
+
+header nav ul li a {
+    color: var(--header-link);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+header nav ul li a:hover {
+    color: var(--header-link-hover);
+}
+
+header nav ul li button {
+    background-color: transparent;
+    border: none;
+    color: var(--header-link);
+    font-size: 16px;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+header nav ul li button:hover {
+    color: var(--header-link-hover);
+}
+
+/* Основной контент */
+main {
+    padding: 20px;
+}
+
+h1 {
+    margin-bottom: 20px;
+    color: var(--header-text);
+}
+
+/* Доски */
+#boards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.board-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    transition: transform 0.2s;
+}
+
+.board-card:hover {
+    transform: translateY(-5px);
+}
+
+.board-card h3 {
+    margin: 0;
+    color: var(--card-title);
+}
+
+.board-card p {
+    margin-top: 10px;
+    color: var(--card-description);
+}
+
+.board-card button {
+    margin-top: 10px;
+    padding: 5px 10px;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.board-card button:hover {
+    background-color: var(--button-hover);
+}
+
+/* Задачи */
+.task-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.task-card .title {
+    font-size: 16px;
+    font-weight: bold;
+    color: var(--card-title);
+}
+
+.task-card .description {
+    color: var(--card-description);
+    margin-top: 5px;
+}
+
+.task-card .status-select, .task-card .priority-select {
+    margin-top: 10px;
+    padding: 5px;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+.task-card .deadline-input {
+    margin-top: 10px;
+    padding: 5px;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+
+.task-card .delete-button {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background-color: var(--delete-bg);
+    color: var(--delete-text);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 5px 10px;
+    transition: background-color 0.3s;
+}
+
+.task-card .delete-button:hover {
+    background-color: var(--delete-hover);
+}
+
+/* Заглушка для пустых страниц */
+.empty-state {
+    text-align: center;
+    margin-top: 50px;
+    font-size: 1.5em;
+    color: var(--text-color);
+}
+
+/* Сообщения об ошибках */
+.error-message {
+    text-align: center;
+    margin-top: 50px;
+    font-size: 1.2em;
+    color: var(--error-color);
+}
+
+/* Кнопки */
+button {
+    padding: 10px 20px;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: var(--button-hover);
+}

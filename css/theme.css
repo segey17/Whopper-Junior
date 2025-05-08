@@ -1,0 +1,43 @@
+/* Светлая тема по умолчанию */
+:root {
+    --bg-color: #f4f4f4;
+    --text-color: #333;
+    --header-bg: #3498db;
+    --header-text: #fff;
+    --header-link: #fff;
+    --header-link-hover: #e74c3c;
+    --card-bg: #fff;
+    --card-border: #ddd;
+    --card-title: #333;
+    --card-description: #777;
+    --button-bg: #3498db;
+    --button-text: #fff;
+    --button-hover: #2980b9;
+    --delete-bg: #e74c3c;
+    --delete-text: #fff;
+    --delete-hover: #c0392b;
+    --input-bg: #f9f9f9;
+    --error-color: #e74c3c;
+}
+
+/* Темная тема */
+[data-theme="dark"] {
+    --bg-color: #121212;
+    --text-color: #e0e0e0;
+    --header-bg: #1e1e1e;
+    --header-text: #fff;
+    --header-link: #3498db;
+    --header-link-hover: #e74c3c;
+    --card-bg: #1e1e1e;
+    --card-border: #333;
+    --card-title: #fff;
+    --card-description: #b3b3b3;
+    --button-bg: #3498db;
+    --button-text: #fff;
+    --button-hover: #2980b9;
+    --delete-bg: #e74c3c;
+    --delete-text: #fff;
+    --delete-hover: #c0392b;
+    --input-bg: #2c2c2c;
+    --error-color: #e74c3c;
+}
