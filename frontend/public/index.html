@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TaskJunior</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        :root {
+            --font-primary: 'Inter', sans-serif;
+            --transition: all 0.3s ease;
+            
+            /* Common */
+            --radius: 12px;
+            --spacing: 20px;
+            
+            /* Light theme */
+            --light-bg: #f8f9fa;
+            --light-card: #ffffff;
+            --light-text: #2d3436;
+            --light-muted: #747d8c;
+            --light-border: #dee2e6;
+            --light-button: #ffffff;
+            --light-button-text: #34495e;
+            
+            /* Dark theme */
+            --dark-bg: #1a1b1f;
+            --dark-card: #2d3135;
+            --dark-text: #dcdde0;
+            --dark-muted: #717c89;
+            --dark-border: #4a4e53;
+            --dark-button: #34495e;
+            --dark-button-text: #ffffff;
+            
+            /* Accent colors */
+            --accent-primary: #34495e; /* Темно-синий */
+            --accent-hover: #2c3e50;
+            --accent-light: #95a5a6; /* Серо-голубой */
+            --accent-gradient-start: #34495e;
+            --accent-gradient-end: #506c8a;
+        }
+
+        body {
+            font-family: var(--font-primary);
+            margin: 0;
+            padding: 0;
+            background-color: var(--light-bg);
+            color: var(--light-text);
+            transition: var(--transition);
+        }
+
+        body.dark-theme {
+            background-color: var(--dark-bg);
+            color: var(--dark-text);
+        }
+
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 40px;
+            height: 40px;
+            background: var(--accent-primary);
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            transition: var(--transition);
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: rotate(90deg);
+        }
+
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            fill: white;
+            transition: var(--transition);
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--accent-gradient-start), var(--accent-gradient-end));
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-content {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .header-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .header-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: var(--radius);
+            background: var(--light-button);
+            color: var(--light-button-text);
+            font-size: 0.95rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-theme .header-button {
+            background: var(--dark-button);
+            color: var(--dark-button-text);
+        }
+
+        body.dark-theme .header-button:hover {
+            background: #4a5e73;
+        }
+
+        .header-button:hover {
+            background: #f1f1f1;
+            transform: translateY(-2px);
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: var(--spacing);
+        }
+
+        h1, h2 {
+            margin: 20px 0 10px;
+            font-weight: 600;
+            color: var(--accent-primary);
+        }
+
+        p {
+            margin-bottom: var(--spacing);
+            line-height: 1.8;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            margin: 40px 0;
+        }
+
+        .feature-card {
+            background: var(--light-card);
+            border: 1px solid var(--light-border);
+            padding: 25px;
+            border-radius: var(--radius);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+        }
+
+        body.dark-theme .feature-card {
+            background: var(--dark-card);
+            border: 1px solid var(--dark-border);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .contact-list {
+            padding-left: 0;
+        }
+
+        .contact-list li {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .contact-list li::before {
+            content: "•";
+            color: var(--accent-primary);
+            margin-right: 10px;
+            font-size: 1.2em;
+        }
+
+        footer {
+            background: var(--light-bg);
+            color: var(--light-muted);
+            text-align: center;
+            padding: 30px 20px;
+            font-size: 0.9rem;
+            margin-top: 60px;
+            border-top: 1px solid var(--light-border);
+        }
+
+        body.dark-theme footer {
+            background: var(--dark-bg);
+            color: var(--dark-muted);
+            border-top: 1px solid var(--dark-border);
+        }
+
+        .highlight {
+            color: var(--accent-primary);
+            font-weight: 500;
+        }
+
+        @media (max-width: 600px) {
+            .header-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body id="app">
+    <button class="theme-toggle" @click="toggleTheme" aria-label="Переключить тему">
+        <svg id="themeIcon" viewBox="0 0 24 24">
+            <path :d="isDark ? 
+                'M12 17a5 5 0 100-10 5 5 0 000 10zm0 2a7 7 0 110-14 7 7 0 010 14z' : 
+                'M12 3a9 9 0 109 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 01-4.4 2.26 5.403 5.403 0 01-3.14-9.8c-.44-.06-.9-.1-1.36-.1z'"/>
+        </svg>
+    </button>
+
+    <header>
+        <div class="header-content">
+            <h1>Управляй своими проектами с TaskJunior</h1>
+            <p class="tagline">Профессиональное управление проектами для современных команд</p>
+            
+            <div class="header-buttons">
+                <a 
+                    v-for="button in headerButtons" 
+                    :key="button.id" 
+                    :href="button.link" 
+                    class="header-button"
+                >
+                    {{ button.text }}
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <p>Добро пожаловать на TaskJunior — вашу платформу для <span class="highlight">эффективного управления проектами</span>. Здесь вы можете легко создавать доски задач, назначать задачи команде и отслеживать прогресс выполнения проектов в реальном времени.</p>
+
+        <h2>Функционал платформы:</h2>
+        <div class="features">
+            <div class="feature-card">
+                <h3>Создание досок</h3>
+                <p>Быстро организуйте задачи по проектам и этапам с интуитивно понятным интерфейсом.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Назначение задач</h3>
+                <p>Распределяйте задачи среди членов команды и устанавливайте приоритеты с помощью удобного менеджера задач.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Отслеживание прогресса</h3>
+                <p>Следите за выполнением задач и общим состоянием проекта с помощью визуальных аналитических инструментов.</p>
+            </div>
+        </div>
+
+        <h2>О сервисе</h2>
+        <p>TaskJunior разработан для того, чтобы помочь вам и вашей команде <span class="highlight">эффективно организовать работу</span> и достичь поставленных целей. Интуитивно понятный интерфейс и мощный функционал делают процесс управления проектами простым и удобным.</p>
+
+        <h2>Контакты</h2>
+        <p>Если у вас есть вопросы или предложения:</p>
+        <ul class="contact-list">
+            <li>Электронная почта: support@example.com</li>
+            <li>Телефон: +1 (234) 567-890</li>
+            <li>Instagram: @example</li>
+            <li>Facebook: /example</li>
+        </ul>
+    </div>
+
+    <footer>
+        <p>&copy; 2025 TaskJunior. Все права защищены.</p>
+    </footer>
+
+    <script>
+        const { createApp } = Vue;
+
+        createApp({
+            data() {
+                return {
+                    isDark: false,
+                    headerButtons: [
+                        { id: 1, text: 'Регистрация', link: 'register.html' },
+                        { id: 2, text: 'Авторизация', link: 'login.html' },
+                        { id: 3, text: 'Вход в кабинет', link: 'dashboard.html' }
+                    ]
+                };
+            },
+            mounted() {
+                // Проверка сохраненной темы
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme === 'dark') {
+                    this.isDark = true;
+                    document.body.classList.add('dark-theme');
+                }
+            },
+            methods: {
+                toggleTheme() {
+                    this.isDark = !this.isDark;
+                    document.body.classList.toggle('dark-theme', this.isDark);
+                    localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
