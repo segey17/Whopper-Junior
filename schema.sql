@@ -41,3 +41,11 @@ CREATE TABLE board_members (
 
 ALTER TABLE users ADD COLUMN role ENUM('user', 'manager', 'developer') DEFAULT 'user';
 ALTER TABLE tasks ADD COLUMN assigned_to INT NULL;
+-- Убедитесь, что таблица tasks содержит все необходимые поля
+ALTER TABLE tasks ADD COLUMN assigned_to INT NULL AFTER deadline;
+ALTER TABLE tasks ADD COLUMN progress INT DEFAULT 0;
+ALTER TABLE tasks MODIFY COLUMN deadline DATETIME NULL;
+-- Убедитесь, что is_private — это BOOLEAN
+ALTER TABLE boards MODIFY COLUMN is_private BOOLEAN DEFAULT FALSE;
+ALTER TABLE boards MODIFY COLUMN description TEXT NOT NULL DEFAULT '';
+UPDATE boards SET description = '' WHERE description IS NULL;
