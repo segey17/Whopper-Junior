@@ -1,22 +1,58 @@
 document.addEventListener('DOMContentLoaded', () => {
     const tasksContainer = document.getElementById('tasks');
     const boardId = new URLSearchParams(window.location.search).get('board_id');
+    const messageContainer = document.querySelector('.message');
+
+    function showMessage(type, text) {
+        const successEl = messageContainer.querySelector('.success');
+        const errorEl = messageContainer.querySelector('.error');
+        successEl.textContent = '';
+        errorEl.textContent = '';
+        if (type === 'success') {
+            successEl.textContent = text;
+        } else if (type === 'error') {
+            errorEl.textContent = text;
+        }
+        messageContainer.style.display = 'block';
+        setTimeout(() => messageContainer.style.display = 'none', 3000);
+    }
+
+    if (!boardId) {
+        showMessage('error', 'ID доски не указан');
+        setTimeout(() => window.location.href = "dashboard.php", 3000);
+        return;
+    }
+
+    function loadUsers() {
+        fetch('api/users.php?action=get')
+            .then(res => res.json())
+            .then(users => {
+                const select = document.getElementById('member-select');
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.username;
+                    select.appendChild(option);
+                });
+            });
+    }
 
     function loadTasks() {
         fetch(`api/tasks.php?action=get&board_id=${boardId}`)
             .then(res => res.json())
             .then(tasks => {
                 tasksContainer.innerHTML = '';
-                if (tasks.length === 0) {
-                    tasksContainer.innerHTML = '<div class="empty-state">У вас пока нет задач. Создайте первую!</div>';
+                if (!tasks.length) {
+                    tasksContainer.innerHTML = '<div class="empty-state">Нет задач. Создайте первую!</div>';
                 } else {
                     tasks.forEach(task => {
+                        const deadline = task.deadline || '';
                         const card = document.createElement('div');
                         card.className = 'task-card';
                         card.innerHTML = `
                             <div class="title">${task.title}</div>
-                            <div class="description">${task.description}</div>
-                            <select class="status-select" data-id="${task.id}" data-progress="${task.progress}">
+                            <div class="description">${task.description || '-'}</div>
+                            <select class="status-select" data-id="${task.id}">
                                 <option value="В ожидании" ${task.status === 'В ожидании' ? 'selected' : ''}>В ожидании</option>
                                 <option value="В работе" ${task.status === 'В работе' ? 'selected' : ''}>В работе</option>
                                 <option value="Завершено" ${task.status === 'Завершено' ? 'selected' : ''}>Завершено</option>
@@ -26,114 +62,107 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <option value="средний" ${task.priority === 'средний' ? 'selected' : ''}>Средний</option>
                                 <option value="высокий" ${task.priority === 'высокий' ? 'selected' : ''}>Высокий</option>
                             </select>
-                            <input type="date" class="deadline-input" data-id="${task.id}" value="${task.deadline || ''}">
-                            <button class="delete-button" onclick="deleteTask(${task.id})">Удалить задачу</button>
+                            <input type="date" class="deadline-input" data-id="${task.id}" value="${deadline}">
+                            <button class="delete-button" data-id="${task.id}">Удалить</button>
                         `;
                         tasksContainer.appendChild(card);
                     });
 
-                    // Обработчики событий для обновления статуса
+                    // Статус
                     document.querySelectorAll('.status-select').forEach(select => {
                         select.addEventListener('change', e => {
                             const taskId = e.target.dataset.id;
-                            const progress = e.target.value === 'В работе' ? 50 :
-                                             e.target.value === 'Завершено' ? 100 : 0;
-
+                            const status = e.target.value;
+                            const progress = status === 'В работе' ? 50 : status === 'Завершено' ? 100 : 0;
                             fetch('api/tasks.php?action=update_status', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({id: taskId, status: e.target.value, progress})
-                            }).then(() => location.reload());
+                                body: JSON.stringify({ id: taskId, status, progress })
+                            }).then(() => loadTasks());
                         });
                     });
 
-                    // Обработчики событий для обновления приоритета
+                    // Приоритет
                     document.querySelectorAll('.priority-select').forEach(select => {
                         select.addEventListener('change', e => {
                             const taskId = e.target.dataset.id;
                             const priority = e.target.value;
-
                             fetch('api/tasks.php?action=update_priority', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({id: taskId, priority})
-                            }).then(() => location.reload());
+                                body: JSON.stringify({ id: taskId, priority })
+                            }).then(() => loadTasks());
                         });
                     });
 
-                    // Обработчики событий для обновления дедлайна
+                    // Дедлайн
                     document.querySelectorAll('.deadline-input').forEach(input => {
                         input.addEventListener('change', e => {
                             const taskId = e.target.dataset.id;
                             const deadline = e.target.value;
-
                             fetch('api/tasks.php?action=update_deadline', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({id: taskId, deadline})
-                            }).then(() => location.reload());
+                                body: JSON.stringify({ id: taskId, deadline })
+                            }).then(() => loadTasks());
                         });
                     });
 
-                    // Обработчики событий для удаления задачи
-                    document.querySelectorAll('.delete-button').forEach(button => {
-                        button.addEventListener('click', e => {
-                            const taskId = e.target.dataset.id;
-                            if (confirm("Вы уверены, что хотите удалить эту задачу?")) {
-                                fetch(`api/tasks.php?action=delete&id=${taskId}`, {
-                                    method: 'DELETE'
-                                }).then(() => {
-                                    alert("Задача удалена успешно!");
-                                    loadTasks();
-                                });
+                    // Удаление
+                    document.querySelectorAll('.delete-button').forEach(btn => {
+                        btn.addEventListener('click', () => {
+                            const taskId = btn.dataset.id;
+                            if (confirm("Удалить задачу?")) {
+                                fetch('api/tasks.php?action=delete', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ id: taskId })
+                                }).then(() => loadTasks());
                             }
                         });
                     });
                 }
-            })
-            .catch(error => {
-                console.error('Ошибка при загрузке задач:', error);
-                tasksContainer.innerHTML = '<div class="error-message">Ошибка при загрузке задач. Попробуйте еще раз позже.</div>';
             });
     }
 
-    function createTask() {
-        const title = prompt("Введите название задачи:");
-        if (!title) return;
+    window.addMember = function () {
+        const userId = document.getElementById('member-select').value;
+        fetch('api/boards.php?action=add_member', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ board_id: boardId, user_id: userId })
+        }).then(res => res.json()).then(data => {
+            if (data.success) {
+                showMessage('success', 'Участник добавлен!');
+            } else {
+                showMessage('error', 'Ошибка добавления: ' + data.error);
+            }
+        });
+    };
 
-        const description = prompt("Введите описание задачи (опционально):");
-        const priority = prompt("Введите приоритет задачи (низкий, средний, высокий):");
-        const deadline = prompt("Введите дедлайн задачи (опционально, формат YYYY-MM-DD):");
+    window.createTask = function () {
+        const title = prompt("Название задачи:");
+        if (!title) return;
+        const description = prompt("Описание задачи:") || '';
+        const priority = prompt("Приоритет (низкий/средний/высокий):")?.toLowerCase() || 'низкий';
+        const deadline = prompt("Дедлайн (YYYY-MM-DD):") || null;
 
         fetch('api/tasks.php?action=create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                board_id: boardId,
-                title: title,
-                description: description,
-                status: 'В ожидании',
-                priority: priority,
-                deadline: deadline
-            })
+            body: JSON.stringify({ board_id: boardId, title, description, priority, deadline })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                alert("Задача создана успешно!");
+                showMessage('success', 'Задача создана!');
                 loadTasks();
             } else {
-                alert('Ошибка при создании задачи: ' + (data.message || 'Неизвестная ошибка.'));
+                showMessage('error', 'Ошибка создания: ' + data.error);
             }
-        })
-        .catch(error => {
-            console.error('Ошибка при создании задачи:', error);
-            alert('Ошибка сети при создании задачи.');
         });
-    }
+    };
 
-    // Объявляем функцию createTask в глобальной области, иначе она не будет доступна из кнопки
-    window.createTask = createTask;
-
+    loadUsers();
     loadTasks();
 });
