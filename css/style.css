@@ -1,204 +1,415 @@
-/* Сброс стилей */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+/* Современный шрифт */
+@import url('https://fonts.googleapis.com/css2?family=Inter :wght@400;600&display=swap');
 
 body {
-    font-family: Arial, sans-serif;
-    background-color: var(--bg-color);
+    font-family: 'Inter', sans-serif;
+    background: var(--bg-gradient);
     color: var(--text-color);
-    transition: background-color 0.3s, color 0.3s;
+    line-height: 1.6;
+    transition: background 0.5s, color 0.3s;
+    min-height: 100vh;
+}
+
+/* Анимированный фон для светлой темы */
+[data-theme="light"] {
+    --bg-gradient: linear-gradient(-45deg, #f4f4f4, #e0e7ff, #dfe9ff, #f4f4f4);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+}
+@keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Стилизация карточек досок */
+.board-card {
+    background-color: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    text-align: left;
+}
+
+.card-header {
+    margin-bottom: 16px;
+}
+
+.card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.button-link {
+    display: inline-block;
+    padding: 8px 12px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.button-link:hover {
+    background-color: #0056b3;
+}
+
+.empty-state {
+    background-color: #f9f9f9;
+    border: 1px dashed #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    font-size: 18px;
+    color: #666;
+}
+
+
+/* Цвета */
+[data-theme="light"] {
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --error-bg: #f8d7da;
+    --error-text: #842029;
+}
+[data-theme="dark"] {
+    --success-bg: #28a745;
+    --success-text: #fff;
+    --error-bg: #dc3545;
+    --error-text: #fff;
+}
+
+/* Цвета для сообщений */
+[data-theme="light"] {
+    --success-bg: #d4edda;
+    --success-text: #155724;
+    --error-bg: #f8d7da;
+    --error-text: #842029;
+}
+
+[data-theme="dark"] {
+    --success-bg: #28a745;
+    --success-text: #fff;
+    --error-bg: #dc3545;
+    --error-text: #fff;
 }
 
 /* Шапка */
 header {
     background-color: var(--header-bg);
     color: var(--header-text);
-    padding: 10px 20px;
+    padding: 15px 30px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 999;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
-
-header h1 {
-    margin: 0;
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--header-text);
+    transition: all 0.3s ease;
 }
-
+.logo svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--header-text);
+    transition: transform 0.3s ease;
+}
+.logo:hover {
+    transform: scale(1.05);
+}
+.logo:hover svg {
+    transform: rotate(15deg);
+}
 header nav ul {
     list-style: none;
     display: flex;
+    gap: 25px;
+    align-items: center;
 }
-
-header nav ul li {
-    margin-left: 20px;
-}
-
-header nav ul li a {
+header nav ul li a,
+header nav ul li button {
     color: var(--header-link);
     text-decoration: none;
-    transition: color 0.3s;
-}
-
-header nav ul li a:hover {
-    color: var(--header-link-hover);
-}
-
-header nav ul li button {
-    background-color: transparent;
-    border: none;
-    color: var(--header-link);
-    font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
     transition: color 0.3s;
 }
-
+header nav ul li a:hover,
 header nav ul li button:hover {
     color: var(--header-link-hover);
 }
 
 /* Основной контент */
 main {
-    padding: 20px;
+    padding: 40px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
 }
-
 h1 {
-    margin-bottom: 20px;
     color: var(--header-text);
+    margin-bottom: 20px;
 }
 
-/* Доски */
-#boards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 20px;
-}
 
-.board-card {
-    background-color: var(--card-bg);
-    border: 1px solid var(--card-border);
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    text-align: center;
-    transition: transform 0.2s;
-}
 
-.board-card:hover {
-    transform: translateY(-5px);
+/* Кнопки управления досками */
+.board-card .buttons-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px; /* Добавляем отступ между кнопками */
+    margin-top: 20px;
+    padding: 0 3px;
+    position: relative; /* Убираем абсолютное позиционирование */
 }
-
-.board-card h3 {
-    margin: 0;
-    color: var(--card-title);
-}
-
-.board-card p {
-    margin-top: 10px;
-    color: var(--card-description);
-}
-
 .board-card button {
-    margin-top: 10px;
-    padding: 5px 10px;
     background-color: var(--button-bg);
     color: var(--button-text);
     border: none;
-    border-radius: 4px;
+    border-radius: 24px;
+    padding: 10px 8px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.2s ease;
 }
 
 .board-card button:hover {
     background-color: var(--button-hover);
+    transform: scale(1.05);
 }
+
 
 /* Задачи */
 .task-card {
     background-color: var(--card-bg);
-    border: 1px solid var(--card-border);
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-    margin-bottom: 10px;
-    position: relative;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out;
 }
-
+.task-card:hover {
+    transform: translateY(-5px);
+}
 .task-card .title {
-    font-size: 16px;
-    font-weight: bold;
+    font-size: 1.1rem;
+    font-weight: 600;
     color: var(--card-title);
+    margin-bottom: 10px;
 }
-
 .task-card .description {
     color: var(--card-description);
-    margin-top: 5px;
+    margin-bottom: 15px;
 }
-
-.task-card .status-select, .task-card .priority-select {
-    margin-top: 10px;
-    padding: 5px;
+.task-card select,
+.task-card input[type="date"] {
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
     border: 1px solid var(--card-border);
-    border-radius: 4px;
     background-color: var(--input-bg);
     color: var(--text-color);
+    margin-bottom: 10px;
 }
-
-.task-card .deadline-input {
-    margin-top: 10px;
-    padding: 5px;
-    border: 1px solid var(--card-border);
-    border-radius: 4px;
-    background-color: var(--input-bg);
-    color: var(--text-color);
-}
-
 .task-card .delete-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
     background-color: var(--delete-bg);
     color: var(--delete-text);
     border: none;
-    border-radius: 4px;
+    border-radius: 6px;
+    padding: 8px 14px;
     cursor: pointer;
-    padding: 5px 10px;
-    transition: background-color 0.3s;
+    transition: all 0.2s ease;
 }
-
 .task-card .delete-button:hover {
     background-color: var(--delete-hover);
+    transform: scale(1.03);
 }
 
-/* Заглушка для пустых страниц */
-.empty-state {
+/* Статусы задач */
+.status-select option[value="В ожидании"] {
+    background: linear-gradient(to right, #f4f4f4, #e0e7ff);
+}
+.status-select option[value="В работе"] {
+    background: linear-gradient(to right, #dfe9ff, #b3cfff);
+}
+.status-select option[value="Завершено"] {
+    background: linear-gradient(to right, #c0fefe, #a0e6e6);
+}
+
+/* Приоритеты задач */
+.priority-select option[value="низкий"] {
+    background: linear-gradient(to right, #f4f4f4, #e0e7ff);
+}
+.priority-select option[value="средний"] {
+    background: linear-gradient(to right, #dfe9ff, #b3cfff);
+}
+.priority-select option[value="высокий"] {
+    background: linear-gradient(to right, #c0fefe, #a0e6e6);
+}
+
+/* Доски */
+.board-card {
+    background: linear-gradient(135deg, var(--card-bg), #3498db);
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    transition: transform 0.2s ease-in-out, background 0.3s;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+}
+.board-card:hover {
+    transform: translateY(-8px);
+    background: linear-gradient(135deg, var(--card-bg), #2980b9);
+}
+.board-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1), transparent);
+    filter: blur(10px);
+    opacity: 0.2;
+    transition: opacity 0.3s;
+}
+.board-card:hover::before {
+    opacity: 0.4;
+}
+.board-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 1.2rem;
+    color: var(--card-title);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.board-card p {
+    margin-bottom: 15px;
+    color: var(--card-description);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Контейнер авторизации */
+.auth-container {
+    max-width: 400px;
+    margin: 80px auto;
+    padding: 40px;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     text-align: center;
-    margin-top: 50px;
-    font-size: 1.5em;
+}
+.auth-container h2 {
+    color: var(--heading-color);
+    margin-bottom: 30px;
+}
+.input-group {
+    position: relative;
+    margin-bottom: 20px;
+}
+.input-group i {
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    transform: translateY(-50%);
     color: var(--text-color);
+    opacity: 0.7;
+    transition: opacity 0.3s;
 }
-
-/* Сообщения об ошибках */
-.error-message {
-    text-align: center;
-    margin-top: 50px;
-    font-size: 1.2em;
-    color: var(--error-color);
+.input-group input {
+    width: 100%;
+    padding: 12px 70px; /* Увеличил правый padding для иконки */
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    background: var(--input-bg);
+    color: var(--text-color);
+    font-size: 14px;
+    margin-right: 222px;
+    transition: border-color 0.3s;
+    box-sizing: border-box; /* Важно! */
 }
-
-/* Кнопки */
-button {
-    padding: 10px 20px;
-    background-color: var(--button-bg);
+.input-group input:focus {
+    border-color: var(--button-bg);
+    outline: none;
+}
+.auth-container button {
+    width: 100%;
+    padding: 12px;
+    background: var(--button-bg);
     color: var(--button-text);
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+.auth-container button:hover {
+    background: var(--button-hover);
+    transform: scale(1.03);
+}
+.auth-container p {
+    margin-top: 15px;
+    color: var(--card-description);
+}
+.auth-container a {
+    color: var(--button-bg);
+    text-decoration: none;
+    transition: color 0.3s;
+}
+.auth-container a:hover {
+    color: var(--button-hover);
 }
 
-button:hover {
-    background-color: var(--button-hover);
+
+.auth-container form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px; /* Добавлен отступ между элементами */
+}
+
+
+
+
+nav ul li a[href="admin.php"] {
+    color: #e74c3c;
+    font-weight: bold;
+}
+nav ul li a[href="admin.php"]:hover {
+    color: #c0392b;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    header nav ul {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    .board-card {
+        padding: 20px;
+    }
+}
+
+/* Дополнительные стили для задач */
+.empty-state {
+    text-align: center;
+    color: var(--card-description);
+    margin-top: 20px;
+}
+
+.error-message {
+    text-align: center;
+    color: var(--error-color);
+    margin-top: 20px;
 }
