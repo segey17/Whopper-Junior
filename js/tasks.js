@@ -23,6 +23,36 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
+    let isOwner = false;
+
+    // Получаем данные пользователя через API
+    fetch('api/auth.php?action=get_user')
+        .then(res => res.json())
+        .then(user => {
+            // Загрузка информации о доске и проверка прав
+            fetch(`api/boards.php?action=get`)
+                .then(res => res.json())
+                .then(boards => {
+                    const board = boards.find(b => b.id == boardId);
+                    if (!board) {
+                        showMessage('error', 'Доска не найдена.');
+                        return;
+                    }
+
+                    isOwner = board.owner_id === user.id;
+
+                    // Если не владелец — скрыть элементы управления
+                    if (!isOwner) {
+                        document.querySelector('.add-member')?.style.display = 'none';
+                        document.querySelectorAll('[data-owner-only]').forEach(el => el.remove());
+                    }
+                });
+
+            loadUsers();
+            loadTasks();
+        })
+        .catch(error => console.error('Ошибка получения данных пользователя:', error));
+
     function loadUsers() {
         fetch('api/users.php?action=get')
             .then(res => res.json())
@@ -68,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         tasksContainer.appendChild(card);
                     });
 
-                    // Статус
+                    // Обработчики событий
                     document.querySelectorAll('.status-select').forEach(select => {
                         select.addEventListener('change', e => {
                             const taskId = e.target.dataset.id;
@@ -82,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     });
 
-                    // Приоритет
                     document.querySelectorAll('.priority-select').forEach(select => {
                         select.addEventListener('change', e => {
                             const taskId = e.target.dataset.id;
@@ -95,7 +124,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     });
 
-                    // Дедлайн
                     document.querySelectorAll('.deadline-input').forEach(input => {
                         input.addEventListener('change', e => {
                             const taskId = e.target.dataset.id;
@@ -108,7 +136,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     });
 
-                    // Удаление
                     document.querySelectorAll('.delete-button').forEach(btn => {
                         btn.addEventListener('click', () => {
                             const taskId = btn.dataset.id;
@@ -131,13 +158,14 @@ document.addEventListener('DOMContentLoaded', () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ board_id: boardId, user_id: userId })
-        }).then(res => res.json()).then(data => {
-            if (data.success) {
-                showMessage('success', 'Участник добавлен!');
-            } else {
-                showMessage('error', 'Ошибка добавления: ' + data.error);
-            }
-        });
+        }).then(res => res.json())
+          .then(data => {
+              if (data.success) {
+                  showMessage('success', 'Участник успешно добавлен!');
+              } else {
+                  showMessage('error', 'Ошибка добавления: ' + data.error);
+              }
+          });
     };
 
     window.createTask = function () {
@@ -146,7 +174,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const description = prompt("Описание задачи:") || '';
         const priority = prompt("Приоритет (низкий/средний/высокий):")?.toLowerCase() || 'низкий';
         const deadline = prompt("Дедлайн (YYYY-MM-DD):") || null;
-
         fetch('api/tasks.php?action=create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

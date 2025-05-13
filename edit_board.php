@@ -40,6 +40,13 @@
                 <input type="checkbox" id="isPrivate"> Приватная
             </label>
         </div>
+        <!-- Новое поле для добавления участника -->
+        <div class="input-group" style="margin-top: 20px;">
+            <label for="memberUsername">Добавить участника по логину:</label>
+            <input type="text" id="memberUsername" placeholder="Введите логин">
+            <button onclick="addMemberByUsername()">Добавить</button>
+        </div>
+        <div id="memberMessage"></div>
         <button type="submit">Сохранить изменения</button>
         <div id="message" style="margin-top: 10px;"></div>
     </form>
@@ -55,6 +62,53 @@ document.addEventListener('DOMContentLoaded', () => {
         messageDiv.style.color = 'red';
         return;
     }
+
+    function addMemberByUsername() {
+    const username = document.getElementById('memberUsername').value.trim();
+    const boardId = document.getElementById('boardId').value;
+    const messageDiv = document.getElementById('memberMessage');
+
+    if (!username || !boardId) {
+        messageDiv.textContent = 'Укажите логин и ID доски.';
+        messageDiv.style.color = 'red';
+        return;
+    }
+
+    // Сначала ищем пользователя по логину
+    fetch(`api/users.php?action=get`)
+        .then(res => res.json())
+        .then(users => {
+            const user = users.find(u => u.username === username);
+            if (!user) {
+                messageDiv.textContent = 'Пользователь не найден.';
+                messageDiv.style.color = 'red';
+                return;
+            }
+
+            // Добавляем найденного пользователя как участника доски
+            fetch('api/boards.php?action=add_member', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ board_id: boardId, user_id: user.id })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    messageDiv.textContent = 'Участник успешно добавлен!';
+                    messageDiv.style.color = 'green';
+                    setTimeout(() => messageDiv.textContent = '', 3000);
+                } else {
+                    messageDiv.textContent = 'Ошибка при добавлении: ' + data.error;
+                    messageDiv.style.color = 'red';
+                }
+            });
+        })
+        .catch(err => {
+            console.error("Ошибка поиска пользователя:", err);
+            messageDiv.textContent = "Произошла сетевая ошибка.";
+            messageDiv.style.color = "red";
+        });
+}
 
     // Загрузка данных доски
     fetch(`api/boards.php?action=get`)

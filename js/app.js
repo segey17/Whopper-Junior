@@ -41,6 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     `;
                     return;
                 }
+
                 boards.forEach(board => {
                     const safeTitle = escapeHtml(board.title || 'Без названия');
                     const safeDescription = escapeHtml(board.description || '');
@@ -75,13 +76,17 @@ document.addEventListener('DOMContentLoaded', () => {
         const boardId = button.getAttribute('data-id');
         const currentTitle = JSON.parse(button.getAttribute('data-title'));
         const currentDescription = JSON.parse(button.getAttribute('data-description'));
+
         const newTitle = prompt("Введите новое название доски:", currentTitle);
         if (!newTitle) return;
+
         const newDescription = prompt("Введите новое описание доски:", currentDescription || '');
+
         if (isNaN(boardId)) {
             showMessage('error', "Ошибка: Неверный идентификатор доски");
             return;
         }
+
         fetch('api/boards.php?action=update', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },

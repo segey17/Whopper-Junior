@@ -19,6 +19,7 @@
             <?php endif; ?>
             <li><a href="logout.php">Выйти</a></li>
             <li><button onclick="toggleTheme()">Сменить тему</button></li>
+            <li><span id="user-info"></span></li>
         </ul>
     </nav>
 </header>

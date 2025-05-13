@@ -34,4 +34,11 @@ if ($action === 'register') {
         echo "Ошибка регистрации: " . $e->getMessage();
     }
 }
+$_SESSION['user'] = $user;
+header("Location: ../dashboard.php");
+exit();
+if ($action === 'get_user') {
+    echo json_encode($_SESSION['user']);
+    exit();
+}
 ?>
