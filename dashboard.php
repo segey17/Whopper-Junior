@@ -28,7 +28,7 @@
     <h1>Ваши доски</h1>
     <button id="createBoardButton">Создать новую доску</button>
 
-    <!-- Форма создания доски -->
+     <!-- Форма создания доски -->
     <form id="createBoardForm" style="display: none; margin-top: 20px;">
         <div class="input-group">
             <label for="boardTitle">Название:</label>
@@ -36,12 +36,7 @@
         </div>
         <div class="input-group">
             <label for="boardDescription">Описание:</label>
-            <textarea id="boardDescription" name="boardDescription"></textarea>
-        </div>
-        <div class="input-group">
-            <label>
-                <input type="checkbox" id="boardIsPrivate" name="boardIsPrivate"> Приватная
-            </label>
+            <input type="text" id="boardDescription" name="boardDescription" required />
         </div>
         <button type="submit">Создать</button>
         <div id="message" style="margin-top: 10px;"></div>
@@ -69,8 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const title = document.getElementById('boardTitle').value.trim();
         const description = document.getElementById('boardDescription').value.trim();
-        const isPrivate = document.getElementById('boardIsPrivate').checked;
-
+        const isPrivate = 1;
         if (!title) {
             messageDiv.textContent = 'Введите название доски.';
             messageDiv.style.color = 'red';
