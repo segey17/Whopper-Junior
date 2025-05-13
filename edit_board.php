@@ -33,12 +33,7 @@
         </div>
         <div class="input-group">
             <label for="boardDescription">Описание:</label>
-            <textarea id="boardDescription"></textarea>
-        </div>
-        <div class="input-group">
-            <label>
-                <input type="checkbox" id="isPrivate"> Приватная
-            </label>
+            <input type="boardDescription" id="boardDescription" required>
         </div>
         <!-- Новое поле для добавления участника -->
         <div class="input-group" style="margin-top: 20px;">
@@ -123,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('boardId').value = board.id;
             document.getElementById('boardTitle').value = board.title;
             document.getElementById('boardDescription').value = board.description;
-            document.getElementById('isPrivate').checked = board.is_private == 1;
         });
 
     // Обработка формы
@@ -132,8 +126,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const data = {
             id: document.getElementById('boardId').value,
             title: document.getElementById('boardTitle').value.trim(),
-            description: document.getElementById('boardDescription').value.trim(),
-            is_private: document.getElementById('isPrivate').checked ? 1 : 0
+            description: document.getElementById('boardDescription').value.trim()
         };
 
         fetch('api/boards.php?action=update', {
