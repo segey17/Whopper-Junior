@@ -1,0 +1,47 @@
+/* Светлая тема по умолчанию */
+:root {
+    --bg-gradient: linear-gradient(135deg, #f4f4f4, #e0e7ff);
+    --bg-color: #f4f4f4;
+    --text-color: #333;
+    --header-bg: #3498db;
+    --header-text: #fff;
+    --heading-color: #222;
+    --header-link: #fff;
+    --header-link-hover: #e74c3c;
+    --card-bg: #fff;
+    --card-border: #ddd;
+    --card-title: #333;
+    --card-description: #777;
+    --button-bg: #3498db;
+    --button-text: #fff;
+    --button-hover: #2980b9;
+    --delete-bg: #e74c3c;
+    --delete-text: #fff;
+    --delete-hover: #c0392b;
+    --input-bg: #f9f9f9;
+    --error-color: #e74c3c;
+}
+
+/* Темная тема */
+[data-theme="dark"] {
+    --bg-gradient: radial-gradient(circle at 10% 20%, #1e1e1e 0%, #121212 100%);
+    --bg-color: #121212;
+    --text-color: #e0e0e0;
+    --header-bg: #1e1e1e;
+    --header-text: #fff;
+    --heading-color: #fff;
+    --header-link: #3498db;
+    --header-link-hover: #e74c3c;
+    --card-bg: #1e1e1e;
+    --card-border: #333;
+    --card-title: #fff;
+    --card-description: #b3b3b3;
+    --button-bg: #3498db;
+    --button-text: #fff;
+    --button-hover: #2980b9;
+    --delete-bg: #e74c3c;
+    --delete-text: #fff;
+    --delete-hover: #c0392b;
+    --input-bg: #2c2c2c;
+    --error-color: #e74c3c;
+}

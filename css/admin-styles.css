@@ -1,0 +1,36 @@
+.auth-container {
+    max-width: 600px;
+    margin: 50px auto;
+    padding: 30px;
+    background-color: var(--card-bg);
+    border-radius: 10px;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--card-border);
+}
+select {
+    padding: 6px;
+    border-radius: 5px;
+    border: 1px solid var(--card-border);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+}
+button.update-role-btn {
+    padding: 6px 12px;
+    background-color: var(--button-bg);
+    color: var(--button-text);
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+button.update-role-btn:hover {
+    background-color: var(--button-hover);
+}
