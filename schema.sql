@@ -10,7 +10,7 @@ CREATE TABLE users (
 CREATE TABLE boards (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(100),
-    description TEXT,
+    description TEXT NOT NULL DEFAULT '',
     is_private BOOLEAN DEFAULT FALSE,
     owner_id INT,
     FOREIGN KEY (owner_id) REFERENCES users(id)
@@ -22,11 +22,11 @@ CREATE TABLE tasks (
     board_id INT,
     title VARCHAR(100),
     description TEXT,
-    status VARCHAR(50),
+    status VARCHAR(50), -- Например: "В ожидании", "В работе", "Завершено"
     priority ENUM('низкий', 'средний', 'высокий'),
-    deadline DATE,
+    deadline DATETIME NULL, -- Изменено на DATETIME для возможности указания времени
     assigned_to INT NULL,
-    progress INT DEFAULT 0,
+    progress INT DEFAULT 0, -- Прогресс в процентах
     FOREIGN KEY (board_id) REFERENCES boards(id),
     FOREIGN KEY (assigned_to) REFERENCES users(id)
 );
@@ -36,16 +36,15 @@ CREATE TABLE board_members (
     board_id INT,
     user_id INT,
     FOREIGN KEY (board_id) REFERENCES boards(id),
-    FOREIGN KEY (user_id) REFERENCES users(id)
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    PRIMARY KEY (board_id, user_id) -- Гарантирует уникальность пары пользователь-доска
 );
 
-ALTER TABLE users ADD COLUMN role ENUM('user', 'manager', 'developer') DEFAULT 'user';
-ALTER TABLE tasks ADD COLUMN assigned_to INT NULL;
--- Убедитесь, что таблица tasks содержит все необходимые поля
-ALTER TABLE tasks ADD COLUMN assigned_to INT NULL AFTER deadline;
-ALTER TABLE tasks ADD COLUMN progress INT DEFAULT 0;
-ALTER TABLE tasks MODIFY COLUMN deadline DATETIME NULL;
--- Убедитесь, что is_private — это BOOLEAN
-ALTER TABLE boards MODIFY COLUMN is_private BOOLEAN DEFAULT FALSE;
+-- Обновления для таблицы boards для обеспечения консистентности поля description
 ALTER TABLE boards MODIFY COLUMN description TEXT NOT NULL DEFAULT '';
 UPDATE boards SET description = '' WHERE description IS NULL;
+
+-- Комментарий: Для поля 'status' в таблице 'tasks' также можно рассмотреть использование ENUM,
+-- например: ENUM('В ожидании', 'В работе', 'Завершено') DEFAULT 'В ожидании'.
+-- Это может повысить целостность данных. Оставляем VARCHAR(50) согласно текущей структуре,
+-- но это возможное улучшение на будущее.

@@ -1,4 +1,16 @@
-<?php session_start(); ?>
+<?php session_start();
+// 1. Проверка, вошел ли пользователь
+if (!isset($_SESSION['user_id']) || !isset($_SESSION['user'])) {
+    header('Location: login.php');
+    exit;
+}
+// 2. Проверка, имеет ли пользователь право доступа (роль manager или developer)
+if ($_SESSION['user']['role'] !== 'manager' && $_SESSION['user']['role'] !== 'developer') {
+    // Можно перенаправить на dashboard или показать страницу с ошибкой доступа
+    header('Location: dashboard.php?error=access_denied');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,45 +18,8 @@
     <title>Админка — Управление пользователями</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/theme.css">
+    <link rel="stylesheet" href="css/admin-styles.css">
     <script src="js/theme.js" defer></script>
-    <style>
-        .auth-container {
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 30px;
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid var(--card-border);
-        }
-        select {
-            padding: 6px;
-            border-radius: 5px;
-            border: 1px solid var(--card-border);
-            background-color: var(--input-bg);
-            color: var(--text-color);
-        }
-        button.update-role-btn {
-            padding: 6px 12px;
-            background-color: var(--button-bg);
-            color: var(--button-text);
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button.update-role-btn:hover {
-            background-color: var(--button-hover);
-        }
-    </style>
 </head>
 <body>
 <header>

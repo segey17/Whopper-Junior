@@ -1,3 +1,10 @@
+<?php
+session_start(); // Начать или возобновить сессию
+if (isset($_SESSION['user_id'])) {
+    header('Location: dashboard.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -28,6 +35,10 @@
             <div class="input-group">
                 <i class="fa-solid fa-lock"></i>
                 <input type="password" name="password" placeholder="Пароль" required>
+            </div>
+            <div class="input-group">
+                <i class="fa-solid fa-key"></i>
+                <input type="password" name="confirm_password" placeholder="Повторите пароль" required>
             </div>
             <button type="submit">Зарегистрироваться</button>
         </form>

@@ -1,3 +1,10 @@
+<?php
+session_start(); // Начать или возобновить сессию
+if (isset($_SESSION['user_id'])) {
+    header('Location: dashboard.php');
+    exit;
+}
+?>
 <!DOCTYPE html>
 <html lang="ru">
 <head>

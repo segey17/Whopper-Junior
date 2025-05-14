@@ -1,4 +1,14 @@
-<?php session_start(); ?>
+<?php session_start();
+// 1. Проверка, вошел ли пользователь
+if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+    header('Location: login.php');
+    exit;
+}
+// Теперь можно безопасно использовать $_SESSION['user']['id'], $_SESSION['user']['username'], $_SESSION['user']['role']
+// Например, для следующего TODO:
+// $current_user_id = $_SESSION['user']['id'];
+// TODO: Добавить проверку, имеет ли пользователь $current_user_id доступ к board_id, указанному в GET-параметре
+?>
 <!DOCTYPE html>
 <html>
 <head>
@@ -72,12 +82,6 @@
 
     <!-- Список задач -->
     <div id="tasks"></div>
-
-    <h2>Участники доски</h2>
-    <div class="add-member">
-        <select id="member-select"></select>
-        <button onclick="addMember()">Добавить участника</button>
-    </div>
 </main>
 
 <script>
@@ -109,7 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        fetch('api/tasks.php?action=create', {
+        fetch('api/task.php?action=create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -143,33 +147,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    function loadUsers() {
-        fetch('api/users.php?action=get')
-            .then(res => res.json())
-            .then(users => {
-                const select = document.getElementById('member-select');
-                users.forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user.id;
-                    option.textContent = user.username;
-                    select.appendChild(option);
-                });
-            });
-    }
-
-    function addMember() {
-        const userId = document.getElementById('member-select').value;
-        fetch('api/boards.php?action=add_member', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ board_id: parseInt(boardId), user_id: parseInt(userId) })
-        }).then(res => res.json()).then(data => {
-            if (data.success) alert('Участник добавлен!');
-        });
-    }
-
     function loadTasks() {
-        fetch(`api/tasks.php?action=get&board_id=${boardId}`)
+        fetch(`api/task.php?action=get&board_id=${boardId}`)
             .then(res => res.json())
             .then(tasks => {
                 const tasksContainer = document.getElementById('tasks');
@@ -206,7 +185,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             const taskId = e.target.dataset.id;
                             const status = e.target.value;
                             const progress = status === 'В работе' ? 50 : status === 'Завершено' ? 100 : 0;
-                            fetch('api/tasks.php?action=update_status', {
+                            fetch('api/task.php?action=update_status', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ id: taskId, status, progress })
@@ -218,7 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         select.addEventListener('change', e => {
                             const taskId = e.target.dataset.id;
                             const priority = e.target.value;
-                            fetch('api/tasks.php?action=update_priority', {
+                            fetch('api/task.php?action=update_priority', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ id: taskId, priority })
@@ -230,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         input.addEventListener('change', e => {
                             const taskId = e.target.dataset.id;
                             const deadline = e.target.value;
-                            fetch('api/tasks.php?action=update_deadline', {
+                            fetch('api/task.php?action=update_deadline', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ id: taskId, deadline })
@@ -242,7 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.addEventListener('click', () => {
                             const taskId = btn.dataset.id;
                             if (confirm("Удалить задачу?")) {
-                                fetch('api/tasks.php?action=delete', {
+                                fetch('api/task.php?action=delete', {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
                                     body: JSON.stringify({ id: taskId })
@@ -254,7 +233,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    loadUsers();
     loadTasks();
 });
 </script>

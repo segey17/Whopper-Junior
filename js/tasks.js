@@ -43,7 +43,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Если не владелец — скрыть элементы управления
                     if (!isOwner) {
-                        document.querySelector('.add-member')?.style.display = 'none';
+                        const addMemberDiv = document.querySelector('.add-member');
+                        if (addMemberDiv) {
+                            addMemberDiv.style.display = 'none';
+                        }
                         document.querySelectorAll('[data-owner-only]').forEach(el => el.remove());
                     }
                 });
@@ -76,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     tasksContainer.innerHTML = '<div class="empty-state">Нет задач. Создайте первую!</div>';
                 } else {
                     tasks.forEach(task => {
-                        const deadline = task.deadline || '';
                         const card = document.createElement('div');
                         card.className = 'task-card';
                         card.innerHTML = `
@@ -92,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <option value="средний" ${task.priority === 'средний' ? 'selected' : ''}>Средний</option>
                                 <option value="высокий" ${task.priority === 'высокий' ? 'selected' : ''}>Высокий</option>
                             </select>
-                            <input type="date" class="deadline-input" data-id="${task.id}" value="${deadline}">
+                            <input type="date" class="deadline-input" data-id="${task.id}" value="${task.deadline ? task.deadline.split(' ')[0] : ''}">
                             <button class="delete-button" data-id="${task.id}">Удалить</button>
                         `;
                         tasksContainer.appendChild(card);
