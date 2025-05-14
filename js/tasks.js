@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <option value="средний" ${task.priority === 'средний' ? 'selected' : ''}>Средний</option>
                                 <option value="высокий" ${task.priority === 'высокий' ? 'selected' : ''}>Высокий</option>
                             </select>
-                            <input type="date" class="deadline-input" data-id="${task.id}" value="${task.deadline ? task.deadline.split(' ')[0] : ''}">
+                            <input type="date" class="deadline-input" data-id="${task.id}" value="${(task.deadline && task.deadline !== '0000-00-00 00:00:00') ? task.deadline.split(' ')[0] : ''}">
                             <button class="delete-button" data-id="${task.id}">Удалить</button>
                         `;
                         tasksContainer.appendChild(card);
@@ -151,6 +151,93 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     });
                 }
+
+                // --- Начало кода для Диаграммы Ганта ---
+                const ganttTasks = tasks.filter(task => task.created_at && task.deadline).map(task => {
+                    const startDate = new Date(task.created_at.split(' ')[0]); // Убираем время, если есть
+                    const endDate = new Date(task.deadline.split(' ')[0]);   // Убираем время, если есть
+
+                    // Проверка на валидность дат
+                    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+                        console.warn(`Некорректные даты для задачи ID ${task.id}: начало ${task.created_at}, конец ${task.deadline}`);
+                        return null; // Пропускаем эту задачу
+                    }
+                    // Убедимся, что дата начала не позже даты окончания
+                    if (startDate > endDate) {
+                         console.warn(`Дата начала (${startDate}) позже даты окончания (${endDate}) для задачи ID ${task.id}. Задача будет пропущена.`);
+                         return null;
+                    }
+
+                    const formatDate = (dateObj) => {
+                        const year = dateObj.getFullYear();
+                        const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+                        const day = dateObj.getDate().toString().padStart(2, '0');
+                        return `${year}-${month}-${day}`;
+                    };
+
+                    let progress = 0;
+                    if (task.status === 'Завершено') {
+                        progress = 100;
+                    } else if (task.status === 'В работе') {
+                        progress = task.progress > 0 ? task.progress : 50; // Используем существующий прогресс или 50%
+                    } else {
+                        progress = task.progress > 0 ? task.progress : 0; // Используем существующий прогресс или 0%
+                    }
+
+                    return {
+                        id: String(task.id), // ID должен быть строкой
+                        name: task.title,
+                        start: formatDate(startDate),
+                        end: formatDate(endDate),
+                        progress: progress,
+                        // dependencies: 'task_id_previous_task' // Если бы были зависимости
+                    };
+                }).filter(task => task !== null); // Удаляем задачи, которые были пропущены (null)
+
+                const ganttChartContainer = document.getElementById('gantt-chart');
+                if (ganttChartContainer && typeof Gantt !== 'undefined') {
+                    // Очищаем предыдущую диаграмму, если она была
+                    ganttChartContainer.innerHTML = '';
+                    if (ganttTasks.length > 0) {
+                         try {
+                            new Gantt("#gantt-chart", ganttTasks, {
+                                header_height: 50,
+                                column_width: 30,
+                                step: 24,
+                                view_modes: ['Quarter Day', 'Half Day', 'Day', 'Week', 'Month'],
+                                bar_height: 20,
+                                bar_corner_radius: 3,
+                                arrow_curve: 5,
+                                padding: 18,
+                                view_mode: 'Week',
+                                date_format: 'YYYY-MM-DD',
+                                custom_popup_html: function(task) {
+                                  return `
+                                    <div class="gantt-popup-content">
+                                      <strong>${task.name}</strong><br>
+                                      Начало: ${task.start}<br>
+                                      Конец: ${task.end}<br>
+                                      Прогресс: ${task.progress}%
+                                    </div>
+                                  `;
+                                }
+                                // Для просмотра, обработчики on_click, on_date_change, on_progress_change не нужны для изменения данных
+                                // on_click: function (task) {
+                                //   console.log(task);
+                                // }
+                            });
+                        } catch (e) {
+                            console.error("Ошибка при создании диаграммы Ганта:", e);
+                            ganttChartContainer.innerHTML = "<p>Не удалось построить диаграмму Ганта.</p>";
+                        }
+                    } else {
+                        ganttChartContainer.innerHTML = "<p>Нет задач с корректными датами для отображения на диаграмме Ганта.</p>";
+                    }
+                } else {
+                    if (!ganttChartContainer) console.error("Контейнер #gantt-chart не найден.");
+                    if (typeof Gantt === 'undefined') console.error("Библиотека Frappe Gantt (Gantt) не загружена.");
+                }
+                // --- Конец кода для Диаграммы Ганта ---
             });
     }
 

@@ -11,7 +11,7 @@ CREATE TABLE boards (
     id INT AUTO_INCREMENT PRIMARY KEY,
     title VARCHAR(100),
     description TEXT NOT NULL DEFAULT '',
-    is_private BOOLEAN DEFAULT FALSE,
+    is_private BOOLEAN DEFAULT TRUE, -- Изменено: по умолчанию доска приватная
     owner_id INT,
     FOREIGN KEY (owner_id) REFERENCES users(id)
 );
@@ -27,6 +27,7 @@ CREATE TABLE tasks (
     deadline DATETIME NULL, -- Изменено на DATETIME для возможности указания времени
     assigned_to INT NULL,
     progress INT DEFAULT 0, -- Прогресс в процентах
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL, -- Дата создания задачи
     FOREIGN KEY (board_id) REFERENCES boards(id),
     FOREIGN KEY (assigned_to) REFERENCES users(id)
 );

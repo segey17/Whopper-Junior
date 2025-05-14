@@ -399,6 +399,10 @@ nav ul li a[href="admin.php"]:hover {
     .board-card {
         padding: 20px;
     }
+    .task-board-columns {
+        flex-direction: column;
+        gap: 15px;
+    }
 }
 
 /* Дополнительные стили для задач */
@@ -412,4 +416,305 @@ nav ul li a[href="admin.php"]:hover {
     text-align: center;
     color: var(--error-color);
     margin-top: 20px;
+}
+
+/* Task Board Column Styles */
+.task-board-columns {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 20px;
+    padding: 10px;
+    background-color: var(--container-bg-color, #f5f7fa);
+    border-radius: 8px;
+}
+
+.task-column {
+    flex: 1;
+    background-color: var(--card-bg-color, #fff);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.task-column h2 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+    color: var(--text-color);
+    border-bottom: 2px solid var(--accent-color, #3498db);
+    padding-bottom: 10px;
+}
+
+.task-list {
+    min-height: 200px;
+    background-color: transparent;
+    border-radius: 4px;
+    padding: 5px;
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* Стили для карточки задачи в колонках */
+.task-card {
+    background-color: var(--task-card-bg, #fff);
+    border: 1px solid var(--border-color, #ddd);
+    border-radius: 6px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    cursor: grab;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.task-card:active {
+    cursor: grabbing;
+}
+
+.task-card .title {
+    font-weight: bold;
+    font-size: 1.1em;
+    color: var(--text-color-strong, #333);
+}
+
+.task-card .description {
+    font-size: 0.9em;
+    color: var(--text-color-muted, #666);
+    margin-bottom: 8px;
+}
+
+.task-card .assigned-user {
+    font-size: 0.85em;
+    color: var(--text-color-accent, #007bff);
+    margin-bottom: 8px;
+    padding: 4px 0;
+    border-top: 1px dashed var(--border-color-light, #eee);
+    margin-top: 6px;
+}
+
+.progress-bar-container {
+    width: 100%;
+    background-color: var(--progress-bg, #e0e0e0);
+    border-radius: 4px;
+    margin: 8px 0;
+    height: 20px; /* Высота контейнера */
+    overflow: hidden; /* Чтобы скругленные углы правильно отображались */
+}
+
+.progress-bar {
+    background-color: var(--progress-bar-fill, #4caf50);
+    color: white;
+    text-align: center;
+    line-height: 20px; /* Вертикальное выравнивание текста по центру */
+    height: 100%;
+    border-radius: 4px; /* Скругление углов для заполнения */
+    transition: width 0.3s ease-in-out;
+    font-size: 0.8em;
+}
+
+/* Dark theme */
+body.dark-theme .task-card .assigned-user {
+    color: var(--text-color-accent-dark, #58a6ff);
+    border-top: 1px dashed #555;
+}
+
+body.dark-theme .progress-bar-container {
+    background-color: #555;
+}
+
+body.dark-theme .progress-bar {
+    background-color: var(--progress-bar-fill-dark, #5cb85c);
+}
+
+.task-card select,
+.task-card input[type="date"],
+.task-card button {
+    width: calc(100% - 10px);
+    padding: 8px;
+    margin-top: 5px;
+    border: 1px solid var(--input-border-color, #ccc);
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+.task-card button.delete-button {
+    background-color: var(--button-danger-bg, #e74c3c);
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.task-card button.delete-button:hover {
+    background-color: var(--button-danger-hover-bg, #c0392b);
+}
+
+.empty-state {
+    text-align: center;
+    color: var(--text-color-muted, #777);
+    padding: 20px;
+    font-style: italic;
+}
+
+/* Темная тема для колонок задач и карточек */
+body.dark-theme .task-board-columns {
+    background-color: #2c2c2c;
+}
+
+body.dark-theme .task-column {
+    background-color: #383838;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+body.dark-theme .task-column h2 {
+    color: #e0e0e0;
+    border-bottom: 2px solid var(--accent-color-dark, #555);
+}
+
+body.dark-theme .task-card {
+    background-color: #444;
+    border: 1px solid #555;
+}
+
+body.dark-theme .task-card .title {
+    color: #f0f0f0;
+}
+
+body.dark-theme .task-card .description {
+    color: #bbb;
+}
+
+body.dark-theme .task-card select,
+body.dark-theme .task-card input[type="date"] {
+    background-color: #505050;
+    border: 1px solid #666;
+    color: #e0e0e0;
+}
+
+body.dark-theme .empty-state {
+    color: #999;
+}
+
+/* Modal Styles */
+.modal {
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+    display: none; /* Hidden by default - will be controlled by JS */
+    align-items: center; /* Vertical center */
+    justify-content: center; /* Horizontal center */
+}
+
+.modal-content {
+    background-color: var(--card-bg-color, #fefefe);
+    margin: auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid var(--border-color, #888);
+    border-radius: 8px;
+    width: 80%; /* Could be more or less, depending on screen size */
+    max-width: 500px; /* Maximum width */
+    box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+    position: relative;
+}
+
+.close-button {
+    color: var(--text-color-muted, #aaa);
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    position: absolute;
+    top: 10px;
+    right: 20px;
+}
+
+.close-button:hover,
+.close-button:focus {
+    color: var(--text-color, black);
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* Styles for form elements inside modal, if needed, can reuse .input-group */
+#editTaskForm .input-group {
+    margin-bottom: 15px;
+}
+
+#editTaskForm label {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--text-color);
+}
+
+#editTaskForm input[type="text"],
+#editTaskForm input[type="date"],
+#editTaskForm input[type="number"],
+#editTaskForm textarea,
+#editTaskForm select {
+    width: calc(100% - 22px); /* Adjust for padding and border */
+    padding: 10px;
+    border: 1px solid var(--input-border-color, #ccc);
+    border-radius: 4px;
+    background-color: var(--input-bg-color, #fff);
+    color: var(--input-text-color, #333);
+}
+
+#editTaskForm textarea {
+    min-height: 80px;
+    resize: vertical;
+}
+
+#editTaskForm button[type="submit"] {
+    background-color: var(--button-primary-bg, #4CAF50);
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1em;
+}
+
+#editTaskForm button[type="submit"]:hover {
+    background-color: var(--button-primary-hover-bg, #45a049);
+}
+
+/* Dark theme for modal */
+body.dark-theme .modal-content {
+    background-color: #333;
+    border: 1px solid #555;
+}
+
+body.dark-theme .close-button {
+    color: #bbb;
+}
+
+body.dark-theme .close-button:hover,
+body.dark-theme .close-button:focus {
+    color: #fff;
+}
+
+body.dark-theme #editTaskForm label {
+    color: #e0e0e0;
+}
+
+body.dark-theme #editTaskForm input[type="text"],
+body.dark-theme #editTaskForm input[type="date"],
+body.dark-theme #editTaskForm input[type="number"],
+body.dark-theme #editTaskForm textarea,
+body.dark-theme #editTaskForm select {
+    background-color: #444;
+    border-color: #666;
+    color: #f0f0f0;
+}
+
+body.dark-theme #editTaskForm button[type="submit"] {
+    background-color: var(--button-primary-bg-dark, #5cb85c);
+}
+
+body.dark-theme #editTaskForm button[type="submit"]:hover {
+    background-color: var(--button-primary-hover-bg-dark, #4cae4c);
 }

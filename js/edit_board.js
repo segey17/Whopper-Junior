@@ -7,7 +7,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const boardIdInput = document.getElementById('boardId');
     const boardTitleInput = document.getElementById('boardTitle');
     const boardDescriptionInput = document.getElementById('boardDescription');
-    const boardIsPrivateCheckbox = document.getElementById('boardIsPrivate');
     const memberUsernameInput = document.getElementById('memberUsername');
     const memberMessageDiv = document.getElementById('memberMessage');
 
@@ -187,7 +186,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (boardIdInput) boardIdInput.value = board.id;
                 if (boardTitleInput) boardTitleInput.value = board.title;
                 if (boardDescriptionInput) boardDescriptionInput.value = board.description;
-                if (boardIsPrivateCheckbox) boardIsPrivateCheckbox.checked = !!parseInt(board.is_private);
 
                 currentBoardOwnerId = board.owner_id;
                 window.isCurrentUserOwner = board.is_owner;
@@ -207,13 +205,12 @@ document.addEventListener('DOMContentLoaded', () => {
     if (editBoardForm) {
         editBoardForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            if (!boardIdInput || !boardTitleInput || !boardDescriptionInput || !boardIsPrivateCheckbox || !messageDiv) return;
+            if (!boardIdInput || !boardTitleInput || !boardDescriptionInput || !messageDiv) return;
 
             const data = {
                 id: boardIdInput.value,
                 title: boardTitleInput.value.trim(),
-                description: boardDescriptionInput.value.trim(),
-                is_private: boardIsPrivateCheckbox.checked
+                description: boardDescriptionInput.value.trim()
             };
 
             if (!data.title) {

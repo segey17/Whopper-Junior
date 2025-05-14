@@ -49,8 +49,7 @@ if ($action === 'update') {
     $board_id = intval($data['id'] ?? 0);
     $title = trim($data['title'] ?? '');
     $description = trim($data['description'] ?? '');
-    // Добавляем обработку is_private
-    $is_private = isset($data['is_private']) ? filter_var($data['is_private'], FILTER_VALIDATE_BOOLEAN) : null;
+    // $is_private = isset($data['is_private']) ? filter_var($data['is_private'], FILTER_VALIDATE_BOOLEAN) : null; // Удаляем возможность изменять is_private через этот эндпоинт
 
     if ($board_id === 0 || empty($title)) {
         http_response_code(400);
@@ -74,10 +73,10 @@ if ($action === 'update') {
     $sql = "UPDATE boards SET title = :title, description = :description";
     $params = ['title' => $title, 'description' => $description, 'board_id' => $board_id];
 
-    if ($is_private !== null) {
-        $sql .= ", is_private = :is_private";
-        $params['is_private'] = $is_private ? 1 : 0;
-    }
+    // if ($is_private !== null) { // Удаляем блок изменения is_private
+    //     $sql .= ", is_private = :is_private";
+    //     $params['is_private'] = $is_private ? 1 : 0;
+    // }
     $sql .= " WHERE id = :board_id";
 
     $updateStmt = $pdo->prepare($sql);

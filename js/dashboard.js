@@ -5,7 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const boardsContainer = document.getElementById('boards');
 
     // Переключение формы
-    if (createBoardButton) { // Добавим проверку на существование элемента
+    if (createBoardButton) {
         createBoardButton.addEventListener('click', () => {
             if (createBoardForm) {
                 createBoardForm.style.display = createBoardForm.style.display === 'none' ? 'block' : 'none';
@@ -17,16 +17,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Обработка отправки формы создания доски
-    if (createBoardForm) { // Добавим проверку
+    if (createBoardForm) {
         createBoardForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const titleInput = document.getElementById('boardTitle');
             const descriptionInput = document.getElementById('boardDescription');
-            const isPrivateCheckbox = document.getElementById('boardIsPrivate');
 
             const title = titleInput ? titleInput.value.trim() : '';
             const description = descriptionInput ? descriptionInput.value.trim() : '';
-            const isPrivate = isPrivateCheckbox ? (isPrivateCheckbox.checked ? 1 : 0) : 0;
 
             if (!title) {
                 if (messageDiv) {
@@ -39,7 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch('api/boards.php?action=create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, description, is_private: isPrivate })
+                body: JSON.stringify({ title, description })
             })
             .then(res => res.json())
             .then(data => {
@@ -50,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         createBoardForm.reset();
                         setTimeout(() => {
                             createBoardForm.style.display = 'none';
-                            loadBoards(); // Обновляем список досок
+                            loadBoards();
                         }, 1000);
                     } else {
                         messageDiv.textContent = 'Ошибка: ' + (data.error || 'Неизвестная ошибка');
@@ -70,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Загрузка списка досок
     function loadBoards() {
-        if (!boardsContainer) return; // Проверка на boardsContainer
+        if (!boardsContainer) return;
 
         fetch('api/boards.php?action=get')
             .then(res => {
@@ -81,10 +79,10 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(boards => {
                 boardsContainer.innerHTML = '';
-                if (!Array.isArray(boards)) { // Добавим проверку, что boards это массив
-                     boardsContainer.innerHTML = `<div class="empty-state">Ошибка загрузки данных.</div>`;
-                     console.error('Ожидался массив досок, получено:', boards);
-                     return;
+                if (!Array.isArray(boards)) {
+                    boardsContainer.innerHTML = `<div class="empty-state">Ошибка загрузки данных.</div>`;
+                    console.error('Ожидался массив досок, получено:', boards);
+                    return;
                 }
                 if (!boards.length) {
                     boardsContainer.innerHTML = `<div class="empty-state">У вас пока нет досок. Создайте первую!</div>`;
@@ -92,7 +90,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     boards.forEach(board => {
                         const card = document.createElement('div');
                         card.className = 'board-card';
-                        // Отображаем (Приватная) если доска приватная
                         const privacyLabel = board.is_private == 1 ? '(Приватная)' : '';
                         card.innerHTML = `
                             <h3>${board.title} ${privacyLabel}</h3>
@@ -123,7 +120,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(data => {
             if (data.success) {
                 alert('Доска удалена.');
-                loadBoards(); // Обновляем список
+                loadBoards();
             } else {
                 alert('Ошибка при удалении: ' + (data.error || 'Неизвестная ошибка'));
             }
@@ -139,6 +136,5 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = `tasks.php?board_id=${boardId}`;
     };
 
-    // Запуск загрузки досок при открытии страницы
     loadBoards();
 });

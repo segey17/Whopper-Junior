@@ -68,10 +68,6 @@ $username = $_SESSION['username'] ?? 'Пользователь';
             <label for="boardDescription">Описание:</label>
             <input type="text" id="boardDescription">
         </div>
-        <div class="input-group">
-            <input type="checkbox" id="boardIsPrivate" name="boardIsPrivate" value="1">
-            <label for="boardIsPrivate" style="margin-left: 5px;">Приватная доска</label>
-        </div>
         <!-- Поле для добавления участника -->
         <div class="input-group" style="margin-top: 20px;">
             <label for="memberUsername">Добавить участника по логину:</label>
