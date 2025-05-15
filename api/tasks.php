@@ -2,6 +2,7 @@
 session_start();
 require '../db.php'; // Предполагается, что db.php в корне проекта
 require_once __DIR__ . '/notifications_helper.php';
+require_once __DIR__ . '/pusher_config.php'; // Подключаем конфигурацию Pusher
 
 $currentUser = $_SESSION['user'] ?? null;
 if (!$currentUser) {
@@ -206,7 +207,19 @@ switch ($action) {
         $stmt = $pdo->prepare($sql);
         try {
             $stmt->execute([$board_id, $title, $description, $status, $priority, $deadline, $assigned_to_user_id, $progress]);
-            echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+            $last_task_id = $pdo->lastInsertId();
+
+            // Получаем созданную задачу для отправки через Pusher
+            $stmt_get_task = $pdo->prepare("SELECT tasks.*, users.username AS assigned_username FROM tasks LEFT JOIN users ON tasks.assigned_to_user_id = users.id WHERE tasks.id = ?");
+            $stmt_get_task->execute([$last_task_id]);
+            $newTaskData = $stmt_get_task->fetch(PDO::FETCH_ASSOC);
+
+            if ($newTaskData) {
+                global $pusher; // Делаем $pusher доступным
+                $pusher->trigger('task-events', 'task_created', $newTaskData);
+            }
+
+            echo json_encode(['success' => true, 'id' => $last_task_id]);
         } catch (PDOException $e) {
             echo json_encode(['error' => 'Ошибка создания задачи: ' . $e->getMessage()]);
         }
@@ -321,6 +334,17 @@ switch ($action) {
             }
             // TODO: Уведомление менеджеру/владельцу доски, если разработчик обновил описание своей задачи (если это требуется)
 
+            // Отправка события Pusher об обновлении деталей задачи
+            $stmt_get_task_updated = $pdo->prepare("SELECT tasks.*, users.username AS assigned_username FROM tasks LEFT JOIN users ON tasks.assigned_to_user_id = users.id WHERE tasks.id = ?");
+            $stmt_get_task_updated->execute([$taskId]);
+            $updatedTaskDataDetails = $stmt_get_task_updated->fetch(PDO::FETCH_ASSOC);
+
+            if ($updatedTaskDataDetails) {
+                global $pusher;
+                $pusher->trigger('task-events', 'task_updated', $updatedTaskDataDetails);
+            }
+
+
             echo json_encode(['success' => true, 'message' => 'Детали задачи успешно обновлены.']);
         } catch (PDOException $e) {
             http_response_code(500);
@@ -382,6 +406,15 @@ switch ($action) {
                 create_app_notification($pdo, $currentUser['id'], $assignee_user_id, $task['task_board_id'], $taskId, $message);
             }
 
+            // Отправка события Pusher об изменении исполнителя
+            $stmt_get_task_assigned = $pdo->prepare("SELECT tasks.*, users.username AS assigned_username FROM tasks LEFT JOIN users ON tasks.assigned_to_user_id = users.id WHERE tasks.id = ?");
+            $stmt_get_task_assigned->execute([$taskId]);
+            $assignedTaskData = $stmt_get_task_assigned->fetch(PDO::FETCH_ASSOC);
+            if ($assignedTaskData) {
+                 global $pusher;
+                 $pusher->trigger('task-events', 'task_updated', $assignedTaskData); // Используем общее событие task_updated
+            }
+
             echo json_encode(['success' => true]);
         } catch (PDOException $e) {
             echo json_encode(['error' => 'Ошибка назначения исполнителя: ' . $e->getMessage()]);
@@ -428,6 +461,15 @@ switch ($action) {
         $stmt = $pdo->prepare("UPDATE tasks SET " . implode(', ', $updateFields) . " WHERE id = ?");
         try {
             $stmt->execute($params);
+            // Отправка события Pusher об обновлении статуса задачи
+            $stmt_get_task_status = $pdo->prepare("SELECT tasks.*, users.username AS assigned_username FROM tasks LEFT JOIN users ON tasks.assigned_to_user_id = users.id WHERE tasks.id = ?");
+            $stmt_get_task_status->execute([$taskId]);
+            $updatedTaskDataStatus = $stmt_get_task_status->fetch(PDO::FETCH_ASSOC);
+
+            if ($updatedTaskDataStatus) {
+                global $pusher;
+                $pusher->trigger('task-events', 'task_updated', $updatedTaskDataStatus); // Используем общее событие task_updated
+            }
             echo json_encode(['success' => true]);
         } catch (PDOException $e) {
             echo json_encode(['error' => 'Ошибка обновления статуса: ' . $e->getMessage()]);
@@ -458,6 +500,10 @@ switch ($action) {
         $stmt = $pdo->prepare("DELETE FROM tasks WHERE id = ?");
         try {
             $stmt->execute([$taskId]);
+            // Отправка события Pusher об удалении задачи
+            global $pusher;
+            $pusher->trigger('task-events', 'task_deleted', ['id' => $taskId, 'board_id' => $task['task_board_id']]); // Отправляем ID задачи и ID доски
+
             echo json_encode(['success' => true]);
         } catch (PDOException $e) {
             echo json_encode(['error' => 'Ошибка удаления задачи: ' . $e->getMessage()]);

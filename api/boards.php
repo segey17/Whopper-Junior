@@ -2,6 +2,7 @@
 session_start();
 require_once '../db.php';
 require_once __DIR__ . '/notifications_helper.php';
+require_once __DIR__ . '/pusher_config.php'; // Подключаем конфигурацию Pusher
 
 // Исправленная проверка авторизации
 if (!isset($_SESSION['user_id'])) {
@@ -82,6 +83,8 @@ if ($action === 'update') {
 
     $updateStmt = $pdo->prepare($sql);
     if ($updateStmt->execute($params)) {
+        // Отправка события Pusher
+        $pusher->trigger('board-events', 'board_updated', ['id' => $board_id, 'title' => $title, 'description' => $description]);
         echo json_encode(['success' => true]);
     } else {
         http_response_code(500); // Internal Server Error
@@ -119,6 +122,8 @@ if ($action === 'delete') {
 
     $deleteStmt = $pdo->prepare("DELETE FROM boards WHERE id = ?");
     if ($deleteStmt->execute([$board_id])) {
+        // Отправка события Pusher
+        $pusher->trigger('board-events', 'board_deleted', ['id' => $board_id]);
         echo json_encode(['success' => true]);
     } else {
         http_response_code(500);
@@ -195,6 +200,9 @@ if ($action === 'add_member') {
         // $pdo, $initiator_user_id, $target_user_id, $board_id (для уведомления), $task_id (null), $message
         create_app_notification($pdo, $current_user_id, $user_to_add_id, $board_id, null, $message);
 
+        // Отправка события Pusher
+        $pusher->trigger('board-events', 'member_added', ['board_id' => $board_id, 'user_id' => $user_to_add_id, 'username' => $username_to_add]);
+
         echo json_encode(['success' => true, 'message' => 'Участник успешно добавлен.']);
     } else {
         http_response_code(500);
@@ -243,7 +251,10 @@ if ($action === 'create') {
 
     $insertStmt = $pdo->prepare("INSERT INTO boards (title, description, is_private, owner_id) VALUES (?, ?, ?, ?)");
     if ($insertStmt->execute([$title, $description, $is_private_db, $current_user_id])) {
-        echo json_encode(['success' => true, 'id' => $pdo->lastInsertId()]);
+        $new_board_id = $pdo->lastInsertId();
+        // Отправка события Pusher
+        $pusher->trigger('board-events', 'board_created', ['id' => $new_board_id, 'title' => $title, 'description' => $description, 'is_private' => $is_private_db, 'owner_id' => $current_user_id]);
+        echo json_encode(['success' => true, 'id' => $new_board_id]);
     } else {
         http_response_code(500);
         echo json_encode(['error' => 'Ошибка создания доски']);
@@ -322,6 +333,8 @@ if ($action === 'remove_member') {
     $deleteStmt = $pdo->prepare("DELETE FROM board_members WHERE board_id = :board_id AND user_id = :user_id");
     if ($deleteStmt->execute(['board_id' => $board_id, 'user_id' => $user_to_remove_id])) {
         if ($deleteStmt->rowCount() > 0) {
+            // Отправка события Pusher
+            $pusher->trigger('board-events', 'member_removed', ['board_id' => $board_id, 'user_id' => $user_to_remove_id]);
             echo json_encode(['success' => true, 'message' => 'Участник успешно удален']);
         } else {
             http_response_code(404); // Not Found - если такой участник не был на доске

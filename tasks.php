@@ -21,6 +21,14 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     <script src="js/theme.js" defer></script>
     <script src="js/notifications.js" defer></script>
     <script src="js/tasks.js" defer></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        // Вам нужно будет заменить PUSHER_APP_KEY и PUSHER_APP_CLUSTER вашими реальными значениями
+        const PUSHER_APP_KEY = 'dbe89bd713c5f93e5e19';
+        const PUSHER_APP_CLUSTER = 'eu';
+        // Получаем board_id из URL для использования в tasks.js
+        const boardIdFromPHP = <?php echo json_encode($_GET['board_id'] ?? null); ?>;
+    </script>
 </head>
 <body>
 <header>

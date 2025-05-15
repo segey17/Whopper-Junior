@@ -6,6 +6,120 @@ document.addEventListener('DOMContentLoaded', () => {
     const taskBoardColumnsContainer = document.querySelector('.task-board-columns'); // Основной контейнер для колонок задач
     const roleDisplayElement = document.getElementById('current-user-board-role-display'); // Для отображения роли
 
+    // Инициализация Pusher
+    let pusher = null;
+    // boardIdFromPHP передается из tasks.php
+    const currentBoardId = typeof boardIdFromPHP !== 'undefined' ? boardIdFromPHP : new URLSearchParams(window.location.search).get('board_id');
+
+    if (
+        typeof Pusher !== 'undefined' &&
+        typeof PUSHER_APP_KEY !== 'undefined' && PUSHER_APP_KEY &&
+        typeof PUSHER_APP_CLUSTER !== 'undefined' && PUSHER_APP_CLUSTER
+    ) {
+        pusher = new Pusher(PUSHER_APP_KEY, {
+            cluster: PUSHER_APP_CLUSTER
+        });
+
+        const taskChannel = pusher.subscribe('task-events');
+
+        const handleTaskEvent = (eventName, data) => {
+            console.log(`Pusher: Received event '${eventName}' on channel 'task-events'. Raw data:`, JSON.parse(JSON.stringify(data))); // Логируем сырые данные
+
+            // Убедимся, что событие относится к текущей доске
+            // currentBoardId уже должен быть строкой из URL или tasks.php
+            if (data.board_id && data.board_id.toString() === currentBoardId) {
+                console.log(`Pusher: Event '${eventName}' IS for the current board (${currentBoardId}). Applying update.`);
+
+                let notificationMessage = '';
+                if (eventName === 'task_created') {
+                    notificationMessage = `Новая задача "${data.title}" добавлена.`;
+                } else if (eventName === 'task_updated') {
+                    notificationMessage = `Задача "${data.title}" (ID: ${data.id}) обновлена.`;
+                } else if (eventName === 'task_deleted') {
+                    // Для task_deleted data может содержать только id и board_id
+                    notificationMessage = `Задача (ID: ${data.id}) удалена.`;
+                } else {
+                    notificationMessage = `Событие: ${eventName.replace(/_/g, ' ')} для задачи ID ${data.id || ''}`;
+                }
+                showToastForTask(notificationMessage, 'info');
+
+                if (window.loadTasks) { // Убедимся, что функция loadTasks существует
+                    window.loadTasks();
+                }
+            } else {
+                console.warn(`Pusher: Event '${eventName}' IGNORED. Event board_id ('${data.board_id}', type: ${typeof data.board_id}) does not match current board_id ('${currentBoardId}', type: ${typeof currentBoardId}).`);
+            }
+        };
+
+        taskChannel.bind('task_created', function(data) {
+            handleTaskEvent('task_created', data);
+        });
+
+        // Заменяем старые обработчики на один для 'task_updated'
+        taskChannel.bind('task_updated', function(data) {
+            handleTaskEvent('task_updated', data);
+        });
+
+        taskChannel.bind('task_deleted', function(data) {
+            handleTaskEvent('task_deleted', data);
+        });
+
+        // Удаляем старые специфичные обработчики, если они были
+        // taskChannel.unbind('task_status_updated');
+        // taskChannel.unbind('task_priority_updated');
+        // taskChannel.unbind('task_deadline_updated');
+        // taskChannel.unbind('task_assigned');
+
+        pusher.connection.bind('connected', () => {
+            console.log('Pusher: Successfully connected on tasks page!');
+        });
+
+        pusher.connection.bind('error', (err) => {
+            console.error('Pusher: Connection error on tasks page:', err);
+            if (err.error && err.error.data && err.error.data.code === 4004) {
+                console.error('Pusher: App key not found or similar issue. Please check your Pusher App Key and Cluster in tasks.php.');
+                showToastForTask('Ошибка риал-тайм обновлений: проверьте ключи Pusher.', 'error');
+            } else {
+                showToastForTask('Ошибка подключения к системе риал-тайм обновлений.', 'error');
+            }
+        });
+    } else {
+        console.warn('Pusher: SDK not loaded or PUSHER_APP_KEY/PUSHER_APP_CLUSTER are not defined or are empty. Realtime updates disabled on tasks page.');
+        showToastForTask('Система риал-тайм обновлений не настроена (ключи не указаны или пусты).', 'warning');
+    }
+
+    // Вспомогательная функция для отображения уведомлений на странице задач
+    function showToastForTask(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`; // Предполагается, что CSS для .toast уже есть
+        toast.style.position = 'fixed';
+        toast.style.bottom = '20px';
+        toast.style.right = '20px';
+        toast.style.padding = '15px';
+        toast.style.backgroundColor = type === 'error' ? '#f44336' : type === 'success' ? '#4CAF50' : '#2196F3';
+        toast.style.color = 'white';
+        toast.style.borderRadius = '5px';
+        toast.style.zIndex = '1000';
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.5s ease-in-out';
+        toast.innerHTML = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+            toast.style.opacity = '1';
+        }, 10);
+
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => {
+                if (document.body.contains(toast)) {
+                    document.body.removeChild(toast);
+                }
+            }, 500);
+        }, 3000 + (type === 'error' ? 2000 : 0)); // Ошибки показываем дольше
+    }
+
     // --- Логика для формы создания задачи ---
     if (toggleTaskButton) {
         toggleTaskButton.addEventListener('click', () => {
@@ -30,17 +144,34 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
-            fetch('api/tasks.php?action=create', { // Проверить путь к API, если 404
+            // ВАЖНО: Убедимся, что boardId это число перед отправкой, если это значение из URL
+            const boardIdInt = parseInt(boardId, 10);
+            if (isNaN(boardIdInt)) {
+                if(taskMessage) {
+                    taskMessage.textContent = 'Ошибка: ID доски некорректен.';
+                    taskMessage.style.color = 'red';
+                }
+                console.error("Create task: Invalid boardId:", boardId);
+                return;
+            }
+
+            const taskData = {
+                board_id: boardIdInt, // Используем преобразованный boardId
+                title,
+                description,
+                status,
+                priority,
+                deadline: deadline === '' ? null : deadline,
+                // assigned_to_user_id и progress будут установлены по умолчанию на бэкенде, если не переданы
+            };
+
+            fetch('api/tasks.php?action=create', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    board_id: parseInt(boardId), title, description, status, priority,
-                    deadline: deadline === '' ? null : deadline
-                    // assigned_to_user_id по умолчанию null или можно добавить поле в форму
-                })
+                body: JSON.stringify(taskData)
             })
             .then(res => {
-                if (!res.ok) { // Обработка HTTP ошибок типа 404
+                if (!res.ok) {
                     return res.text().then(text => { throw new Error(`Ошибка сервера: ${res.status} ${text}`); });
                 }
                 return res.json();
@@ -74,7 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Функция отрисовки задач в колонках ---
-    function renderTasksInColumns(tasks, currentUserRoleKey) { // Добавим currentUserRoleKey для управления UI
+    function renderTasksInColumns(tasks, currentUserRoleKey) {
         console.log("renderTasksInColumns called with tasks:", tasks, "and roleKey:", currentUserRoleKey);
         const statuses = ['В ожидании', 'В работе', 'Завершено'];
         statuses.forEach(status => {
@@ -101,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
             let assignedUserInfo = '';
             if (task.assigned_username) {
                 assignedUserInfo = `<div class="assigned-user">Назначено: ${task.assigned_username}</div>`;
-            } else if (task.assigned_to_user_id) { // Используем правильное поле
+            } else if (task.assigned_to_user_id) {
                 assignedUserInfo = `<div class="assigned-user">Назначено ID: ${task.assigned_to_user_id}</div>`;
             }
 
@@ -112,28 +243,18 @@ document.addEventListener('DOMContentLoaded', () => {
                                    </div>`;
             }
 
-            // Логика отображения кнопок в зависимости от роли
-            // currentUserRoleKey может быть 'owner', 'participant_developer', 'viewer'
             let actionButtons = '';
-            if (currentUserRoleKey === 'owner') { // Владелец может все
+            if (currentUserRoleKey === 'owner') {
                 actionButtons = `
                     <button class="delete-button" data-id="${task.id}">Удалить</button>
                     <button class="edit-button" data-id="${task.id}">Редактировать</button>
                 `;
             } else if (currentUserRoleKey === 'participant_developer') {
-                 // Участник-разработчик может редактировать (если это его задача или разрешено), но не удалять чужие.
-                 // Пока оставим возможность редактирования (для изменения статуса/приоритета)
-                 // и удаления (если это его задача - это проверяется на сервере)
                 actionButtons = `
                     <button class="delete-button" data-id="${task.id}">Удалить</button>
                     <button class="edit-button" data-id="${task.id}">Редактировать</button>
                 `;
-                 // Более строгая логика:
-                 // if (task.assigned_to_user_id == YOUR_CURRENT_USER_ID_FROM_SESSION_OR_GLOBAL_VAR) {
-                 //    actionButtons += `<button class="edit-button" data-id="${task.id}">Редактировать</button>`;
-                 // }
             }
-
 
             card.innerHTML = `
                 <div class="title">${task.title}</div>
@@ -166,10 +287,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Загрузка задач ---
-    // Оборачиваем в window.loadTasks, чтобы быть уверенным, что это та функция, которая вызывается
     window.loadTasks = function() {
         if (!boardId) {
-            if (taskBoardColumnsContainer) { // Используем taskBoardColumnsContainer
+            if (taskBoardColumnsContainer) {
                  taskBoardColumnsContainer.innerHTML = '<h1>ID доски не указан. Невозможно загрузить задачи.</h1>';
             }
             const ganttContainer = document.getElementById('gantt-chart-container');
@@ -178,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        fetch(`api/tasks.php?action=get&board_id=${boardId}`) // Проверить путь к API, если 404
+        fetch(`api/tasks.php?action=get&board_id=${boardId}`)
             .then(res => {
                 if (!res.ok) {
                     return res.json().then(err => { throw new Error(err.error || `HTTP error! status: ${res.status}`); })
@@ -186,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return res.json();
             })
-            .then(responseData => { // Ожидаем объект { tasks: [], currentUserEffectiveRoleOnBoard: "...", currentUserEffectiveRoleKey: "..." }
+            .then(responseData => {
                 if (typeof responseData === 'object' && responseData !== null && responseData.tasks && Array.isArray(responseData.tasks)) {
                     if (roleDisplayElement && responseData.currentUserEffectiveRoleOnBoard) {
                         roleDisplayElement.textContent = `Ваша роль на этой доске: ${responseData.currentUserEffectiveRoleOnBoard}`;
@@ -194,7 +314,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     renderTasksInColumns(responseData.tasks, responseData.currentUserEffectiveRoleKey);
                 } else if (responseData && responseData.error) {
                     console.error('Ошибка от API при загрузке задач:', responseData.error);
-                    renderTasksInColumns([], null); // Передаем пустой массив и null для роли
+                    renderTasksInColumns([], null);
                      const pendingList = document.querySelector('.task-list[data-status-column="В ожидании"]');
                     if (pendingList) {
                         pendingList.innerHTML = `<div class="empty-state">Не удалось загрузить задачи: ${responseData.error}</div>`;
@@ -225,13 +345,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (target.classList.contains('delete-button')) {
                 const taskId = target.dataset.id;
                 if (confirm("Удалить задачу?")) {
-                    fetch('api/tasks.php?action=delete', { // Проверить путь к API, если 404
+                    fetch('api/tasks.php?action=delete', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: parseInt(taskId) })
                     }).then(res => res.json()).then(data => {
                         if (data.success) {
-                            loadTasks();
+                            // loadTasks(); // Обновление через Pusher, это можно убрать или оставить для подстраховки
                         } else {
                             alert('Ошибка удаления: ' + data.error);
                         }
@@ -241,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (target.classList.contains('edit-button')) {
                 const taskId = target.dataset.id;
-                fetch(`api/tasks.php?action=get_details&task_id=${taskId}`) // Проверить путь к API
+                fetch(`api/tasks.php?action=get_details&task_id=${taskId}`)
                     .then(res => res.json())
                     .then(taskDetails => {
                         if (taskDetails && !taskDetails.error) {
@@ -265,34 +385,34 @@ document.addEventListener('DOMContentLoaded', () => {
             if (target.classList.contains('status-select')) {
                 const status = target.value;
                 const progress = status === 'В работе' ? 50 : (status === 'Завершено' ? 100 : 0);
-                fetch('api/tasks.php?action=update_status', { // Проверить путь к API
+                fetch('api/tasks.php?action=update_status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: parseInt(taskId), status, progress })
                 }).then(res => res.json()).then(data => {
-                    if (data.success) loadTasks(); else alert('Ошибка обновления статуса: ' + data.error);
+                    if (data.success) { /* loadTasks(); */ } else alert('Ошибка обновления статуса: ' + data.error);
                 });
             }
 
             if (target.classList.contains('priority-select')) {
                 const priority = target.value;
-                fetch('api/tasks.php?action=update_details', { // Проверить путь к API (update_priority нет, используем update_details)
+                fetch('api/tasks.php?action=update_details', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: parseInt(taskId), priority })
                 }).then(res => res.json()).then(data => {
-                    if (data.success) loadTasks(); else alert('Ошибка обновления приоритета: ' + data.error);
+                    if (data.success) { /* loadTasks(); */ } else alert('Ошибка обновления приоритета: ' + data.error);
                 });
             }
 
             if (target.classList.contains('deadline-input')) {
                 const deadline = target.value;
-                fetch('api/tasks.php?action=update_details', { // Проверить путь к API
+                fetch('api/tasks.php?action=update_details', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ id: parseInt(taskId), deadline: deadline === '' ? null : deadline })
                 }).then(res => res.json()).then(data => {
-                    if (data.success) loadTasks(); else alert('Ошибка обновления дедлайна: ' + data.error);
+                    if (data.success) { /* loadTasks(); */ } else alert('Ошибка обновления дедлайна: ' + data.error);
                 });
             }
         });
@@ -313,7 +433,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('editTaskDeadline').value = deadlineDate;
 
         const assignedUserInput = document.getElementById('editTaskAssignedUser');
-        assignedUserInput.value = task.assigned_to_user_id || ''; // Используем assigned_to_user_id
+        assignedUserInput.value = task.assigned_to_user_id || '';
         assignedUserInput.dataset.originalAssignedTo = task.assigned_to_user_id || '';
 
         editTaskModal.style.display = 'flex';
@@ -341,7 +461,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const priority = document.getElementById('editTaskPriority').value;
             const deadline = document.getElementById('editTaskDeadline').value;
             const assignedUserSelect = document.getElementById('editTaskAssignedUser');
-            const newAssignedToIdString = assignedUserSelect.value; // Value from select
+            const newAssignedToIdString = assignedUserSelect.value;
             const originalAssignedToIdString = assignedUserSelect.dataset.originalAssignedTo || '';
 
             if (!title) {
@@ -353,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 deadline: deadline === '' ? null : deadline,
             };
 
-            fetch('api/tasks.php?action=update_details', { // Проверить путь
+            fetch('api/tasks.php?action=update_details', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(taskDetailsData)
@@ -364,12 +484,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     let newAssignedToId = null;
                     if (newAssignedToIdString !== '') {
                         newAssignedToId = parseInt(newAssignedToIdString, 10);
-                        // No NaN check needed here if values are controlled, but good for safety if needed elsewhere
                     }
                     const originalAssignedToId = originalAssignedToIdString === '' ? null : parseInt(originalAssignedToIdString, 10);
 
                     if (newAssignedToId !== originalAssignedToId) {
-                        fetch('api/tasks.php?action=assign', { // Проверить путь
+                        fetch('api/tasks.php?action=assign', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ id: parseInt(taskId), assignee_user_id: newAssignedToId })
@@ -379,13 +498,12 @@ document.addEventListener('DOMContentLoaded', () => {
                             if (!assignData.success) {
                                 alert('Ошибка обновления назначения: ' + (assignData.error || 'Неизвестная ошибка'));
                             }
-                            // Перезагрузка и закрытие модалки в любом случае после попытки назначения
                             closeEditModal();
-                            loadTasks();
+                            // loadTasks(); // Обновление через Pusher
                         });
                     } else {
                         closeEditModal();
-                        loadTasks();
+                        // loadTasks(); // Обновление через Pusher
                     }
                 } else {
                     alert('Ошибка обновления задачи: ' + (detailsData.error || 'Неизвестная ошибка'));
@@ -429,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (newStatus === 'В работе') progress = 50;
                     else if (newStatus === 'Завершено') progress = 100;
 
-                    fetch('api/tasks.php?action=update_status', { // Проверить путь
+                    fetch('api/tasks.php?action=update_status', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: parseInt(taskId), status: newStatus, progress })
@@ -446,14 +564,12 @@ document.addEventListener('DOMContentLoaded', () => {
                                 if (progress > 0) {
                                     progressBar.style.width = progress + '%';
                                     progressBar.textContent = progress + '%';
-                                } else { // progress is 0
-                                   if(progressBarContainer) progressBarContainer.innerHTML = ''; // Remove progress bar
+                                } else {
+                                   if(progressBarContainer) progressBarContainer.innerHTML = '';
                                 }
-                            } else if (progress > 0 && progressBarContainer) { // Progress bar didn't exist but should
+                            } else if (progress > 0 && progressBarContainer) {
                                 progressBarContainer.innerHTML = `<div class="progress-bar" style="width: ${progress}%;">${progress}%</div>`;
                             }
-                            // Если нет progressBarContainer, значит его и не было, и прогресс 0 - ничего не делаем
-
                         } else {
                             alert('Ошибка обновления статуса: ' + data.error); loadTasks();
                         }
@@ -462,7 +578,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else if (draggedItem) {
                      draggedItem.style.opacity = '1';
                 }
-                 draggedItem = null;
+                 draggedItem = null; // Убедимся, что draggedItem сбрасывается
             });
         });
     }
@@ -512,46 +628,45 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        fetch('api/users.php?action=get')
+        // Настоящий board_id может быть из boardId (или currentBoardId)
+        const bId = boardId || currentBoardId;
+        if (!bId) {
+            assignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
+            return;
+        }
+
+        fetch(`api/boards.php?action=get_members&board_id=${bId}`)
             .then(response => {
-                if (!response.ok) {
-                    // Попытка прочитать тело ошибки как JSON, если не удается - как текст
-                    return response.json().catch(() => response.text()).then(errorBody => {
-                        throw new Error(`Ошибка сети: ${response.status}. ${typeof errorBody === 'string' ? errorBody : (errorBody.error || 'Неизвестная ошибка API')}`);
-                    });
-                }
+                if (!response.ok) return response.json().then(e => { throw new Error(e.error || 'Ошибка API'); });
                 return response.json();
             })
-            .then(users => {
-                // Очищаем предыдущие опции, кроме первой (если она "-- Не назначен --")
-                while (assignedUserSelect.options.length > 1) {
-                    assignedUserSelect.remove(1);
-                }
-                // Если первая опция не "-- Не назначен --" или ее нет, добавляем
-                if (assignedUserSelect.options.length === 0 || assignedUserSelect.options[0].value !== "") {
-                     // Удаляем все и добавляем "-- Не назначен --" как первую
-                    assignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
-                }
-
-                if (Array.isArray(users)) {
-                    users.forEach(user => {
+            .then(members => {
+                assignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
+                if (Array.isArray(members) && members.length > 0) {
+                    // Исключаем владельца доски (user.is_owner === true || user.role === 'owner')
+                    members.filter(user => !user.is_owner && user.role !== 'owner').forEach(user => {
                         const option = document.createElement('option');
                         option.value = user.id;
-                        option.textContent = `${user.username} (Роль: ${user.role})`;
+                        option.textContent = user.username + (user.role ? ` (Роль: ${user.role})` : '');
                         assignedUserSelect.appendChild(option);
                     });
-                } else if (users && users.error) {
-                    console.warn('Не удалось загрузить пользователей для назначения (возможно, нет прав):', users.error);
-                    // Можно здесь добавить disabled для select или информационное сообщение
-                    // assignedUserSelect.disabled = true;
+                    // Если после фильтрации никого нет — добавим вариант "-- Нет участников --"
+                    if (assignedUserSelect.options.length === 1) {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = '-- Нет участников --';
+                        assignedUserSelect.appendChild(option);
+                    }
                 } else {
-                    console.warn('Ответ API пользователей не является массивом:', users);
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '-- Нет участников --';
+                    assignedUserSelect.appendChild(option);
                 }
             })
             .catch(error => {
-                console.error('Ошибка при загрузке пользователей:', error.message);
-                // assignedUserSelect.disabled = true; // Можно заблокировать селект при ошибке
-                // Можно также отобразить сообщение пользователю рядом с селектом
+                console.error('Ошибка при загрузке участников доски:', error.message);
+                assignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
             });
     }
 

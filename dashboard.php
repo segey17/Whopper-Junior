@@ -19,6 +19,12 @@ $user_role = $_SESSION['user']['role'] ?? 'user'; // Теперь роль мо�
     <script src="js/notifications.js" defer></script>
     <!-- Подключаем внешний JS файл -->
     <script src="js/dashboard.js" defer></script>
+    <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
+    <script>
+        // Вам нужно будет заменить PUSHER_APP_KEY и PUSHER_APP_CLUSTER вашими реальными значениями
+        const PUSHER_APP_KEY = 'dbe89bd713c5f93e5e19';
+        const PUSHER_APP_CLUSTER = 'eu';
+    </script>
     <!-- Добавим Font Awesome для иконок -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
