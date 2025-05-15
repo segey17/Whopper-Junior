@@ -1,10 +1,20 @@
 <?php
-session_start();
+session_start(); // Возвращаем, т.к. этот скрипт может быть точкой входа (login, register)
 require '../db.php';
 
-$action = $_GET['action'] ?? 'login';
+$auth_action = null;
+if (isset($_POST['username']) && isset($_POST['password'])) {
+    if (isset($_GET['action']) && $_GET['action'] === 'login') {
+        $auth_action = 'login';
+    } elseif (isset($_GET['action']) && $_GET['action'] === 'register') {
+        $auth_action = 'register';
+    } else if (basename($_SERVER['PHP_SELF']) === 'auth.php' && isset($_POST['username']) && isset($_POST['password']) && !isset($_GET['action'])){
+        // Попытка логина, если вызван auth.php напрямую без action в GET, но есть POST данные
+        $auth_action = 'login';
+    }
+}
 
-if ($action === 'login') {
+if ($auth_action === 'login') {
     $username = $_POST['username'];
     $password = $_POST['password'];
     $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
@@ -20,34 +30,79 @@ if ($action === 'login') {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
 
+        // Удаляем сообщение об ошибке, если оно было
+        unset($_SESSION['login_error']);
+
         header("Location: ../dashboard.php");
         exit();
     } else {
-        echo "Неверный логин или пароль.";
+        $_SESSION['login_error'] = "Неверный логин или пароль.";
+        header("Location: ../login.php");
         exit();
     }
 }
 
-if ($action === 'register') {
-    $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $stmt = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
-    $stmt->execute([$username]);
-    if ($stmt->fetchColumn() > 0) {
-        die("Пользователь с таким именем уже существует.");
+if ($auth_action === 'register') {
+    $username = trim($_POST['username']);
+    $password = $_POST['password'];
+    $confirm_password = $_POST['confirm_password'] ?? '';
+
+    if (empty($username) || empty($password)) {
+        $_SESSION['register_error'] = "Логин и пароль не могут быть пустыми.";
+        header("Location: ../register.php");
+        exit();
+    }
+
+    if ($password !== $confirm_password) {
+        $_SESSION['register_error'] = "Пароли не совпадают.";
+        header("Location: ../register.php");
+        exit();
+    }
+
+    if (strlen($password) < 6) {
+         $_SESSION['register_error'] = "Пароль должен быть не менее 6 символов.";
+         header("Location: ../register.php");
+         exit();
+    }
+
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+    $stmt_check = $pdo->prepare("SELECT COUNT(*) FROM users WHERE username = ?");
+    $stmt_check->execute([$username]);
+    if ($stmt_check->fetchColumn() > 0) {
+        $_SESSION['register_error'] = "Пользователь с таким именем уже существует.";
+        header("Location: ../register.php");
+        exit();
     }
     try {
-        $pdo->prepare("INSERT INTO users (username, password) VALUES (?, ?)")
-           ->execute([$username, $password]);
-        // После успешной регистрации перенаправляем на dashboard
+        $stmt_insert = $pdo->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, 'user')"); // Указываем роль по умолчанию
+        $stmt_insert->execute([$username, $hashed_password]);
+        $user_id = $pdo->lastInsertId();
+
+        // Автологин после успешной регистрации
+        $_SESSION['user'] = [
+            'id' => $user_id,
+            'username' => $username,
+            'role' => 'user' // Явно указываем роль
+        ];
+        $_SESSION['user_id'] = $user_id;
+        $_SESSION['username'] = $username;
+
+        // Удаляем сообщение об ошибке, если оно было
+        unset($_SESSION['register_error']);
+
         header("Location: ../dashboard.php");
         exit();
     } catch (PDOException $e) {
-        echo "Ошибка регистрации: " . $e->getMessage();
+        error_log("Registration error: " . $e->getMessage()); // Логируем ошибку
+        $_SESSION['register_error'] = "Ошибка регистрации. Пожалуйста, попробуйте позже.";
+        header("Location: ../register.php");
+        exit();
     }
 }
 
-if ($action === 'get_user') {
+// Логика get_user остается как есть, если она нужна
+if (isset($_GET['action']) && $_GET['action'] === 'get_user') {
     $user = [
         'user_id' => $_SESSION['user_id'] ?? null,
         'username' => $_SESSION['username'] ?? null,

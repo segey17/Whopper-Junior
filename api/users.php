@@ -2,6 +2,8 @@
 session_start();
 require '../db.php';
 
+header('Content-Type: application/json');
+
 $user = $_SESSION['user'] ?? null;
 if (!$user || $user['role'] !== 'manager') {
     exit(json_encode(['error' => 'Доступ запрещен']));
@@ -10,7 +12,7 @@ if (!$user || $user['role'] !== 'manager') {
 $action = $_GET['action'] ?? '';
 
 if ($action === 'get') {
-    $stmt = $pdo->query("SELECT * FROM users");
+    $stmt = $pdo->query("SELECT id, username, role FROM users");
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
 }
 

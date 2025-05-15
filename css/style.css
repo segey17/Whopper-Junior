@@ -3,99 +3,131 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background: var(--bg-gradient);
-    color: var(--text-color);
-    line-height: 1.6;
-    transition: background 0.5s, color 0.3s;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-color); /* Use theme variable */
+    color: var(--text-color); /* Use theme variable */
+    transition: background-color 0.3s ease, color 0.3s ease;
     min-height: 100vh;
-}
-
-/* Анимированный фон для светлой темы */
-[data-theme="light"] {
-    --bg-gradient: linear-gradient(-45deg, #f4f4f4, #e0e7ff, #dfe9ff, #f4f4f4);
-    background-size: 400% 400%;
-    animation: gradientBG 15s ease infinite;
-}
-@keyframes gradientBG {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
-}
-
-/* Стилизация карточек досок */
-.board-card {
-    background-color: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 16px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    width: 300px;
-    text-align: left;
-}
-
-.card-header {
-    margin-bottom: 16px;
-}
-
-.card-actions {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;
 }
 
-.button-link {
-    display: inline-block;
+/* Стили для страницы авторизации (login/register) */
+body.auth-page {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, var(--auth-bg-start, #f5f8fb) 0%, var(--auth-bg-end, #e4e8ee) 100%);
+}
+[data-theme="dark"] body.auth-page {
+    background: linear-gradient(135deg, var(--auth-bg-start-dark, #181f2b) 0%, var(--auth-bg-end-dark, #232a39) 100%);
+}
+.auth-page main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: calc(100vh - 60px); /* за вычетом header */
+}
+
+/* Креативный blur и полупрозрачный градиентный фон для .auth-container */
+.auth-page .auth-container {
+    position: relative;
+    background: rgba(30, 39, 61, 0.76); /* fallback */
+    overflow: hidden;
+    box-shadow: 0 8px 32px 0 var(--shadow-color), 0 3px 60px 0 rgba(50,100,255,0.08);
+    border-radius: 18px;
+    margin: 0;
+}
+.auth-page .auth-container::before {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(40,40,40,0.75) 50%, rgba(80,80,80,0.8) 100%);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: inherit;
+    pointer-events: none;
+}
+[data-theme="dark"] .auth-page .auth-container::before {
+    background: linear-gradient(120deg, rgba(88,138,255,0.12) 6%, rgba(41,61,87,0.34) 86%);
+}
+.auth-container > * {
+    position: relative;
+    z-index: 1;
+}
+@media (max-width: 600px) {
+    .auth-container {
+        max-width: 98vw;
+        padding: 18px !important;
+    }
+}
+
+/* Стили для логотипа на странице авторизации */
+.auth-logo {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 40px 0 28px 0;
+    pointer-events: none;
+    user-select: none;
+}
+.auth-logo .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1.6rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    background: none;
     padding: 8px 12px;
-    background-color: #007bff;
-    color: white;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 14px;
+    border-radius: 12px;
+    background-image: linear-gradient(94deg, #60a5fa 15%, #c084fc 55%, #93c5fd 95%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-fill-color: transparent;
+    animation: logo-breath 4.5s ease-in-out infinite;
     cursor: pointer;
 }
-
-.button-link:hover {
-    background-color: #0056b3;
+[data-theme="dark"] .auth-logo .logo {
+    background-image: linear-gradient(100deg, #93c5fd 15%, #a5b4fc 75%, #c4b5fd 100%);
 }
-
-.empty-state {
-    background-color: #f9f9f9;
-    border: 1px dashed #ccc;
-    border-radius: 8px;
-    padding: 20px;
-    text-align: center;
-    font-size: 18px;
-    color: #666;
+.auth-logo .logo svg {
+    display: inline-block;
+    width: 30px;
+    height: 30px;
+    margin-right: 6px;
+    filter: drop-shadow(0 1px 8px rgba(96, 165, 250, 0.6)) drop-shadow(0 4px 18px rgba(192, 132, 252, 0.5));
+    animation: logo-breath 4.5s ease-in-out infinite;
+    transition: transform 0.28s cubic-bezier(.41,1.42,.59,1.11), filter 0.3s;
 }
-
-
-/* Цвета */
-[data-theme="light"] {
-    --success-bg: #d4edda;
-    --success-text: #155724;
-    --error-bg: #f8d7da;
-    --error-text: #842029;
+.auth-logo .logo:hover svg,
+.auth-logo .logo:focus svg {
+    transform: rotate(18deg) scale(1.18) translateY(-3px);
+    filter: drop-shadow(0 2px 10px rgba(192, 132, 252, 0.9)) drop-shadow(0 15px 30px rgba(147, 197, 253, 0.8));
+    animation-play-state: paused;
 }
-[data-theme="dark"] {
-    --success-bg: #28a745;
-    --success-text: #fff;
-    --error-bg: #dc3545;
-    --error-text: #fff;
-}
-
-/* Цвета для сообщений */
-[data-theme="light"] {
-    --success-bg: #d4edda;
-    --success-text: #155724;
-    --error-bg: #f8d7da;
-    --error-text: #842029;
-}
-
-[data-theme="dark"] {
-    --success-bg: #28a745;
-    --success-text: #fff;
-    --error-bg: #dc3545;
-    --error-text: #fff;
+@keyframes logo-breath {
+    0% {
+        transform: scale(1) rotate(0deg);
+        filter: drop-shadow(0 1px 8px rgba(96, 165, 250, 0.5)) drop-shadow(0 4px 18px rgba(192, 132, 252, 0.4));
+    }
+    50% {
+        transform: scale(1.045) rotate(-4deg);
+        filter: drop-shadow(0 2px 12px rgba(192, 132, 252, 0.7)) drop-shadow(0 7px 20px rgba(147, 197, 253, 0.6));
+    }
+    100% {
+        transform: scale(1) rotate(0deg);
+        filter: drop-shadow(0 1px 8px rgba(96, 165, 250, 0.5)) drop-shadow(0 4px 18px rgba(192, 132, 252, 0.4));
+    }
 }
 
 /* Шапка */
@@ -151,6 +183,34 @@ header nav ul li button:hover {
     color: var(--header-link-hover);
 }
 
+/* Стили для кнопки смены темы */
+#theme-toggle-button {
+  background: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--subtle-border-color);
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+#theme-toggle-button:hover {
+  background: var(--bg-color-secondary);
+  border-color: var(--accent-color);
+}
+
+/* Специальные стили для темной темы */
+[data-theme="dark"] #theme-toggle-button {
+  color: var(--text-color);
+  border-color: var(--subtle-border-color);
+}
+
+[data-theme="dark"] #theme-toggle-button:hover {
+  background: var(--accent-color);
+  color: white;
+}
+
 /* Основной контент */
 main {
     padding: 40px 20px;
@@ -161,34 +221,6 @@ h1 {
     color: var(--header-text);
     margin-bottom: 20px;
 }
-
-
-
-/* Кнопки управления досками */
-.board-card .buttons-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px; /* Добавляем отступ между кнопками */
-    margin-top: 20px;
-    padding: 0 3px;
-    position: relative; /* Убираем абсолютное позиционирование */
-}
-.board-card button {
-    background-color: var(--button-bg);
-    color: var(--button-text);
-    border: none;
-    border-radius: 24px;
-    padding: 10px 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.board-card button:hover {
-    background-color: var(--button-hover);
-    transform: scale(1.05);
-}
-
 
 /* Задачи */
 .task-card {
@@ -238,66 +270,24 @@ h1 {
 
 /* Статусы задач */
 .status-select option[value="В ожидании"] {
-    background: linear-gradient(to right, #f4f4f4, #e0e7ff);
+    background: linear-gradient(to right, var(--status-pending-bg-start, #f4f4f4), var(--status-pending-bg-end, #e0e7ff));
 }
 .status-select option[value="В работе"] {
-    background: linear-gradient(to right, #dfe9ff, #b3cfff);
+    background: linear-gradient(to right, var(--status-inprogress-bg-start, #dfe9ff), var(--status-inprogress-bg-end, #b3cfff));
 }
 .status-select option[value="Завершено"] {
-    background: linear-gradient(to right, #c0fefe, #a0e6e6);
+    background: linear-gradient(to right, var(--status-completed-bg-start, #c0fefe), var(--status-completed-bg-end, #a0e6e6));
 }
 
 /* Приоритеты задач */
 .priority-select option[value="низкий"] {
-    background: linear-gradient(to right, #f4f4f4, #e0e7ff);
+    background: linear-gradient(to right, var(--priority-low-bg-start, #f4f4f4), var(--priority-low-bg-end, #e0e7ff));
 }
 .priority-select option[value="средний"] {
-    background: linear-gradient(to right, #dfe9ff, #b3cfff);
+    background: linear-gradient(to right, var(--priority-medium-bg-start, #dfe9ff), var(--priority-medium-bg-end, #b3cfff));
 }
 .priority-select option[value="высокий"] {
-    background: linear-gradient(to right, #c0fefe, #a0e6e6);
-}
-
-/* Доски */
-.board-card {
-    background: linear-gradient(135deg, var(--card-bg), #3498db);
-    border-radius: 16px;
-    padding: 25px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease-in-out, background 0.3s;
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-}
-.board-card:hover {
-    transform: translateY(-8px);
-    background: linear-gradient(135deg, var(--card-bg), #2980b9);
-}
-.board-card::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1), transparent);
-    filter: blur(10px);
-    opacity: 0.2;
-    transition: opacity 0.3s;
-}
-.board-card:hover::before {
-    opacity: 0.4;
-}
-.board-card h3 {
-    margin: 0 0 10px 0;
-    font-size: 1.2rem;
-    color: var(--card-title);
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-}
-.board-card p {
-    margin-bottom: 15px;
-    color: var(--card-description);
-    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.1);
+    background: linear-gradient(to right, var(--priority-high-bg-start, #c0fefe), var(--priority-high-bg-end, #a0e6e6));
 }
 
 /* Контейнер авторизации */
@@ -305,13 +295,13 @@ h1 {
     max-width: 400px;
     margin: 80px auto;
     padding: 40px;
-    background: var(--card-bg);
+    background: transparent; /* Убрал background: var(--card-bg); для прозрачности */
     border-radius: 16px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px var(--shadow-color);
     text-align: center;
 }
 .auth-container h2 {
-    color: var(--heading-color);
+    color: #ffffff; /* Всегда белый для заголовка на черном фоне */
     margin-bottom: 30px;
 }
 .input-group {
@@ -321,32 +311,57 @@ h1 {
 .input-group i {
     position: absolute;
     top: 50%;
-    left: 10px;
+    left: 14px;
     transform: translateY(-50%);
-    color: var(--text-color);
-    opacity: 0.7;
-    transition: opacity 0.3s;
+    font-size: 1.15em;
+    color: rgba(255, 255, 255, 0.8); /* Светлые иконки для черного фона */
+    opacity: 0.8;
+    pointer-events: none;
+    transition: color 0.3s, opacity 0.3s;
+}
+[data-theme="dark"] .input-group i {
+    color: var(--input-icon-color); /* Оставляем переменную для темной темы */
 }
 .input-group input {
     width: 100%;
-    padding: 12px 70px; /* Увеличил правый padding для иконки */
-    border: 1px solid var(--card-border);
+    padding: 12px 15px 12px 42px; /* Слева достаточно места под иконку (32px+10px) */
+    border: 1px solid rgba(255, 255, 255, 0.2); /* Полупрозрачная белая рамка */
     border-radius: 8px;
+    background: rgba(255, 255, 255, 0.15); /* Полупрозрачный белый фон */
+    color: #ffffff; /* Белый текст */
+    font-size: 15px;
+    font-weight: 500;
+    transition: border-color 0.3s, background 0.3s;
+    box-sizing: border-box;
+    outline: none;
+}
+[data-theme="dark"] .input-group input {
+    border: 1px solid var(--card-border);
     background: var(--input-bg);
     color: var(--text-color);
-    font-size: 14px;
-    margin-right: 222px;
-    transition: border-color 0.3s;
-    box-sizing: border-box; /* Важно! */
 }
 .input-group input:focus {
-    border-color: var(--button-bg);
-    outline: none;
+    border-color: var(--accent-color);
+    background: rgba(255, 255, 255, 0.25); /* Чуть более светлый фон при фокусе */
+}
+[data-theme="dark"] .input-group input:focus {
+    background: var(--input-bg);
+}
+.input-group input::placeholder {
+    color: rgba(255, 255, 255, 0.7); /* Светлый placeholder */
+    opacity: 1;
+    transition: color 0.3s;
+}
+[data-theme="dark"] .input-group input::placeholder {
+    color: var(--placeholder-color, #bbb);
+}
+.input-group input:focus::placeholder {
+    color: var(--accent-color);
 }
 .auth-container button {
     width: 100%;
     padding: 12px;
-    background: var(--button-bg);
+    background: var(--accent-color);
     color: var(--button-text);
     border: none;
     border-radius: 8px;
@@ -360,10 +375,13 @@ h1 {
 }
 .auth-container p {
     margin-top: 15px;
+    color: #ffffff; /* Белый текст параграфа */
+}
+[data-theme="dark"] .auth-container p {
     color: var(--card-description);
 }
 .auth-container a {
-    color: var(--button-bg);
+    color: var(--accent-color);
     text-decoration: none;
     transition: color 0.3s;
 }
@@ -371,16 +389,12 @@ h1 {
     color: var(--button-hover);
 }
 
-
 .auth-container form {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px; /* Добавлен отступ между элементами */
+    gap: 15px;
 }
-
-
-
 
 nav ul li a[href="admin.php"] {
     color: #e74c3c;
@@ -396,22 +410,58 @@ nav ul li a[href="admin.php"]:hover {
         flex-direction: column;
         align-items: flex-start;
     }
+
+    header nav ul li {
+        margin: 5px 0;
+    }
+
+    .boards-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+        padding: 0 15px;
+    }
+
     .board-card {
+        min-height: 180px;
         padding: 20px;
     }
-    .task-board-columns {
+
+    .dashboard-header {
         flex-direction: column;
-        gap: 15px;
+        text-align: center;
+    }
+
+    .stats-section {
+        margin-top: 20px;
+        justify-content: center;
+    }
+
+    .dashboard-actions {
+        flex-direction: column;
+    }
+
+    .dashboard-actions .search-filter {
+        width: 100%;
+        margin-bottom: 15px;
+    }
+
+    .primary-button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .boards-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .board-card {
+        height: auto;
+        min-height: 180px;
     }
 }
 
 /* Дополнительные стили для задач */
-.empty-state {
-    text-align: center;
-    color: var(--card-description);
-    margin-top: 20px;
-}
-
 .error-message {
     text-align: center;
     color: var(--error-color);
@@ -498,34 +548,23 @@ nav ul li a[href="admin.php"]:hover {
     background-color: var(--progress-bg, #e0e0e0);
     border-radius: 4px;
     margin: 8px 0;
-    height: 20px; /* Высота контейнера */
-    overflow: hidden; /* Чтобы скругленные углы правильно отображались */
+    height: 20px;
+    overflow: hidden;
 }
 
 .progress-bar {
     background-color: var(--progress-bar-fill, #4caf50);
     color: white;
     text-align: center;
-    line-height: 20px; /* Вертикальное выравнивание текста по центру */
+    line-height: 20px;
     height: 100%;
-    border-radius: 4px; /* Скругление углов для заполнения */
+    border-radius: 4px;
     transition: width 0.3s ease-in-out;
     font-size: 0.8em;
 }
 
-/* Dark theme */
-body.dark-theme .task-card .assigned-user {
-    color: var(--text-color-accent-dark, #58a6ff);
-    border-top: 1px dashed #555;
-}
-
-body.dark-theme .progress-bar-container {
-    background-color: #555;
-}
-
-body.dark-theme .progress-bar {
-    background-color: var(--progress-bar-fill-dark, #5cb85c);
-}
+/* Стили для .task-card select, input, button УЖЕ используют переменные,
+   поэтому специфичные для body.dark-theme могут быть не нужны, если переменные в theme.css настроены */
 
 .task-card select,
 .task-card input[type="date"],
@@ -556,68 +595,29 @@ body.dark-theme .progress-bar {
     font-style: italic;
 }
 
-/* Темная тема для колонок задач и карточек */
-body.dark-theme .task-board-columns {
-    background-color: #2c2c2c;
-}
-
-body.dark-theme .task-column {
-    background-color: #383838;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-}
-
-body.dark-theme .task-column h2 {
-    color: #e0e0e0;
-    border-bottom: 2px solid var(--accent-color-dark, #555);
-}
-
-body.dark-theme .task-card {
-    background-color: #444;
-    border: 1px solid #555;
-}
-
-body.dark-theme .task-card .title {
-    color: #f0f0f0;
-}
-
-body.dark-theme .task-card .description {
-    color: #bbb;
-}
-
-body.dark-theme .task-card select,
-body.dark-theme .task-card input[type="date"] {
-    background-color: #505050;
-    border: 1px solid #666;
-    color: #e0e0e0;
-}
-
-body.dark-theme .empty-state {
-    color: #999;
-}
-
 /* Modal Styles */
 .modal {
-    position: fixed; /* Stay in place */
-    z-index: 1000; /* Sit on top */
+    position: fixed;
+    z-index: 1000;
     left: 0;
     top: 0;
-    width: 100%; /* Full width */
-    height: 100%; /* Full height */
-    overflow: auto; /* Enable scroll if needed */
-    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
-    display: none; /* Hidden by default - will be controlled by JS */
-    align-items: center; /* Vertical center */
-    justify-content: center; /* Horizontal center */
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+    display: none;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal-content {
     background-color: var(--card-bg-color, #fefefe);
-    margin: auto; /* 15% from the top and centered */
+    margin: auto;
     padding: 20px;
     border: 1px solid var(--border-color, #888);
     border-radius: 8px;
-    width: 80%; /* Could be more or less, depending on screen size */
-    max-width: 500px; /* Maximum width */
+    width: 80%;
+    max-width: 500px;
     box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
     position: relative;
 }
@@ -639,7 +639,6 @@ body.dark-theme .empty-state {
     cursor: pointer;
 }
 
-/* Styles for form elements inside modal, if needed, can reuse .input-group */
 #editTaskForm .input-group {
     margin-bottom: 15px;
 }
@@ -655,7 +654,7 @@ body.dark-theme .empty-state {
 #editTaskForm input[type="number"],
 #editTaskForm textarea,
 #editTaskForm select {
-    width: calc(100% - 22px); /* Adjust for padding and border */
+    width: calc(100% - 22px);
     padding: 10px;
     border: 1px solid var(--input-border-color, #ccc);
     border-radius: 4px;
@@ -682,39 +681,720 @@ body.dark-theme .empty-state {
     background-color: var(--button-primary-hover-bg, #45a049);
 }
 
-/* Dark theme for modal */
-body.dark-theme .modal-content {
-    background-color: #333;
-    border: 1px solid #555;
+/* Notification Styles */
+.notifications-container {
+    position: relative;
+    display: inline-block;
+    margin-left: 15px;
 }
 
-body.dark-theme .close-button {
-    color: #bbb;
+.notifications-icon {
+    cursor: pointer;
+    font-size: 1.5em;
+    position: relative;
+    user-select: none;
 }
 
-body.dark-theme .close-button:hover,
-body.dark-theme .close-button:focus {
-    color: #fff;
+.notifications-badge {
+    position: absolute;
+    top: -5px;
+    right: -10px;
+    background-color: var(--danger-color, red);
+    color: white;
+    border-radius: 50%;
+    padding: 2px 6px;
+    font-size: 0.75em;
 }
 
-body.dark-theme #editTaskForm label {
-    color: #e0e0e0;
+.notifications-dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 5px);
+    background-color: var(--background-color, white);
+    border: 1px solid var(--border-color, #ccc);
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    border-radius: 8px; /* Немного больше скругления */
 }
 
-body.dark-theme #editTaskForm input[type="text"],
-body.dark-theme #editTaskForm input[type="date"],
-body.dark-theme #editTaskForm input[type="number"],
-body.dark-theme #editTaskForm textarea,
-body.dark-theme #editTaskForm select {
-    background-color: #444;
-    border-color: #666;
-    color: #f0f0f0;
+.notifications-dropdown ul#notifications-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
-body.dark-theme #editTaskForm button[type="submit"] {
-    background-color: var(--button-primary-bg-dark, #5cb85c);
+.notification-item {
+    padding: 12px 15px; /* Увеличим отступы */
+    border-bottom: 1px solid var(--border-color-light, #f0f0f0); /* Слегка светлее разделитель */
+    font-size: 0.9em;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start; /* Выравнивание по верху */
+    color: var(--text-color, #333);
+    gap: 10px; /* Отступ между текстом и кнопкой */
 }
 
-body.dark-theme #editTaskForm button[type="submit"]:hover {
-    background-color: var(--button-primary-hover-bg-dark, #4cae4c);
+.notification-item:last-child {
+    border-bottom: none;
+}
+
+.notification-message {
+    flex-grow: 1; /* Чтобы текст занимал доступное пространство */
+    line-height: 1.4; /* Для лучшей читаемости многострочного текста */
+}
+
+/* Общий стиль для кнопок в дропдауне уведомлений */
+.notifications-dropdown-button {
+    width: 100%;
+    padding: 10px 15px;
+    border: none;
+    background-color: var(--button-bg, #007bff);
+    color: var(--button-text, white);
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background-color 0.2s ease;
+    text-align: center;
+    display: block;
+    margin-top: 5px;
+}
+
+.notifications-dropdown-button:hover {
+    background-color: var(--button-hover, #0056b3);
+}
+
+/* Специфичные стили для кнопки "Прочитано" */
+button.mark-as-read {
+    width: auto;
+    padding: 4px 8px;
+    font-size: 0.75em;
+    background-color: var(--button-secondary-bg, #e9ecef);
+    color: var(--button-secondary-text, #495057);
+    border: 1px solid var(--button-secondary-border, #ced4da);
+    border-radius: 4px;
+    white-space: nowrap;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+button.mark-as-read:hover {
+    background-color: var(--button-secondary-hover-bg, #dee2e6);
+    border-color: var(--button-secondary-hover-border, #adb5bd);
+}
+
+/* Кнопка "Отметить все как прочитанные" - используем общий стиль */
+#mark-all-as-read {
+    border-top: 1px solid var(--border-color-light, #f0f0f0);
+    margin-top: 0;
+    border-radius: 0 0 8px 8px;
+}
+
+.notifications-dropdown ul#notifications-list:empty::before {
+    content: "Нет новых уведомлений";
+    display: block;
+    padding: 20px;
+    text-align: center;
+    color: var(--text-muted-color, #777);
+}
+
+/* Стили для плейсхолдеров */
+.input-group input::placeholder {
+    color: var(--placeholder-color, #bbb);
+    opacity: 1;
+    transition: color 0.3s;
+}
+.input-group input:focus::placeholder {
+    color: var(--accent-color);
+}
+
+/* Для Firefox, если opacity не сработает */
+.input-group input::-moz-placeholder {
+    color: var(--placeholder-color, #bbb);
+    opacity: 1;
+    transition: color 0.3s;
+}
+.input-group input:focus::-moz-placeholder {
+    color: var(--accent-color);
+}
+
+.input-group input::-webkit-input-placeholder {
+    color: var(--placeholder-color, #bbb);
+    opacity: 1;
+    transition: color 0.3s;
+}
+.input-group input:focus::-webkit-input-placeholder {
+    color: var(--accent-color);
+}
+
+.input-group input:-ms-input-placeholder {
+    color: var(--placeholder-color, #bbb);
+    opacity: 1;
+    transition: color 0.3s;
+}
+.input-group input:focus:-ms-input-placeholder {
+    color: var(--accent-color);
+}
+
+/* Улучшенные стили для страницы dashboard */
+main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 20px;
+}
+
+/* Заголовок и статистика */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.title-section h1 {
+    font-size: 2rem;
+    margin-bottom: 8px;
+    color: var(--heading-color);
+}
+
+.subtitle {
+    color: var(--secondary-text-color);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.stats-section {
+    display: flex;
+    gap: 20px;
+}
+
+.stat-card {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 16px 24px;
+    min-width: 120px;
+    box-shadow: var(--shadow-sm);
+    text-align: center;
+    border: 1px solid var(--subtle-border-color);
+}
+
+.stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: var(--secondary-text-color);
+    font-size: 0.9rem;
+}
+
+/* Фильтры и поиск */
+.dashboard-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.search-filter {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--secondary-text-color);
+}
+
+.search-box input {
+    padding: 10px 10px 10px 35px;
+    border-radius: 8px;
+    border: 1px solid var(--subtle-border-color);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    width: 280px;
+    font-size: 0.95rem;
+}
+
+.filter-box select {
+    padding: 10px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--subtle-border-color);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 0.95rem;
+    cursor: pointer;
+}
+
+/* Кнопки */
+.primary-button {
+    background-color: var(--accent-color);
+    color: var(--button-text);
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.primary-button:hover {
+    background-color: var(--accent-color-darker);
+    transform: translateY(-2px);
+}
+
+.secondary-button {
+    background-color: var(--bg-color-secondary);
+    color: var(--text-color);
+    padding: 10px 20px;
+    border: 1px solid var(--subtle-border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.secondary-button:hover {
+    background-color: var(--bg-color);
+}
+
+/* Модальное окно */
+.modal-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-lg);
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+}
+
+.close-button {
+    position: absolute;
+    top: 16px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--secondary-text-color);
+}
+
+.close-button:hover {
+    color: var(--text-color);
+}
+
+/* Форма создания доски */
+#createBoardForm {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+#createBoardForm .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+#createBoardForm label {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+#createBoardForm input[type="text"],
+#createBoardForm textarea {
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid var(--subtle-border-color);
+    background-color: var(--input-bg);
+    color: var(--text-color);
+    font-size: 1rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#createBoardForm textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    gap: 10px !important;
+}
+
+.checkbox-group input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+.message-box {
+    padding: 12px;
+    border-radius: 8px;
+    margin-top: 15px;
+    display: none;
+}
+
+.success-message {
+    background-color: rgba(16, 185, 129, 0.1);
+    color: var(--success-color);
+    border: 1px solid var(--success-color);
+}
+
+.error-message {
+    background-color: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+}
+
+/* --- ОБНОВЛЕННЫЕ СТИЛИ ДЛЯ СЕТКИ ДОСОК --- */
+.boards-container {
+  padding: 20px 0;
+  width: 100%;
+}
+
+.boards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 70px; /* Увеличиваем отступы между карточками до 70px */
+  margin-top: 20px;
+  width: 100%;
+  max-width: 1200px; /* Ограничиваем максимальную ширину сетки */
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 30px; /* Увеличиваем отступы по бокам */
+}
+
+/* Карточка доски - улучшенный современный стиль */
+.board-card {
+  width: 100%;
+  height: 100%;
+  padding: 25px;
+  margin: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--card-bg), var(--accent-color));
+  color: var(--text-color);
+  box-shadow: 0 8px 24px var(--shadow-color);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 200px; /* Фиксированная минимальная высота */
+  isolation: isolate; /* Предотвращает "выход" содержимого за пределы карточки */
+}
+
+.board-card:hover {
+  transform: translateY(-5px) scale(1.01); /* Уменьшаем масштабирование до 1.01 вместо 1.02 */
+  box-shadow: 0 12px 30px var(--shadow-color);
+  background: linear-gradient(135deg, var(--card-bg), var(--accent-color-darker));
+}
+
+.board-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 0% 0%, rgba(255, 255, 255, 0.1), transparent 70%);
+  opacity: 0.4;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.board-card:hover::before {
+  opacity: 0.6;
+}
+
+.board-card h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--card-title);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.board-card h3 i {
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.board-card p {
+  margin: 0 0 20px;
+  font-size: 0.95rem;
+  color: var(--card-description);
+  flex-grow: 1;
+}
+
+.board-card .buttons-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
+.board-card h3 .privacy-badge {
+    font-size: 0.8rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background-color: rgba(0,0,0,0.1);
+    color: var(--card-title);
+}
+
+.board-card button,
+.board-card .button-link {
+  padding: 8px 15px;
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  font-weight: 500;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.board-card button:hover,
+.board-card .button-link:hover {
+  background: var(--button-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.board-card .delete-button {
+  background-color: var(--danger-color);
+}
+
+.board-card .delete-button:hover {
+  background-color: var(--danger-color-hover, #d32f2f);
+}
+
+/* Стили для кнопки задач */
+.board-card .tasks-button {
+  background-color: var(--accent-color);
+}
+
+.board-card .tasks-button:hover {
+  background-color: var(--accent-color-darker);
+}
+
+/* Адаптивность кнопок на маленьких экранах */
+@media (max-width: 480px) {
+  .board-card .buttons-container {
+    flex-direction: column;
+  }
+
+  .board-card button,
+  .board-card .button-link {
+    width: 100%;
+  }
+}
+
+/* Стили для всплывающих уведомлений */
+.toast {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: var(--card-bg);
+  color: var(--text-color);
+  padding: 15px 20px;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  z-index: 1000;
+  transform: translateY(100px);
+  opacity: 0;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  max-width: 350px;
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  line-height: 1.5;
+}
+
+.toast.show {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+.toast-icon {
+  margin-right: 15px;
+  font-size: 1.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: 1em;
+  line-height: 1.5;
+  color: inherit;
+  word-break: break-word;
+}
+
+.toast-success {
+  border-left: 4px solid var(--success-color);
+}
+
+.toast-success .toast-icon {
+  color: var(--success-color);
+}
+
+.toast-error {
+  border-left: 4px solid var(--danger-color);
+}
+
+.toast-error .toast-icon {
+  color: var(--danger-color);
+}
+
+.toast-info {
+  border-left: 4px solid var(--accent-color);
+}
+
+.toast-info .toast-icon {
+  color: var(--accent-color);
+}
+
+/* Специальные стили для темной темы */
+[data-theme="dark"] .toast {
+  background-color: #2a3441;
+  color: #e6e6e6;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.4);
+  border: 1px solid #3a4657;
+}
+
+[data-theme="dark"] .toast-message {
+  color: #e6e6e6;
+}
+
+[data-theme="dark"] .toast-success {
+  border-left: 4px solid #22d3a7;
+}
+[data-theme="dark"] .toast-error {
+  border-left: 4px solid #ef4444;
+}
+[data-theme="dark"] .toast-info {
+  border-left: 4px solid #60a5fa;
+}
+
+/* Улучшенные стили для пустого состояния */
+.empty-state {
+    background-color: var(--card-bg);
+    border-radius: 12px;
+    padding: 40px 30px;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--subtle-border-color);
+    margin: 30px auto;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.empty-icon {
+    font-size: 2.5rem;
+    color: var(--secondary-text-color);
+    margin-bottom: 10px;
+    opacity: 0.8;
+}
+
+.empty-state h3 {
+    margin: 0;
+    color: var(--text-color);
+    font-size: 1.5rem;
+}
+
+.empty-state p {
+    color: var(--secondary-text-color);
+    margin: 0 0 20px 0;
+    font-size: 1.05rem;
+}
+
+.empty-state .primary-button {
+    margin-top: 10px;
+}
+
+/* Стили для индикаторов активного пункта меню */
+header nav ul li a.active {
+    color: var(--accent-color);
+    position: relative;
+}
+
+header nav ul li a.active::after {
+    content: '';
+    position: absolute;
+    bottom: -5px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: var(--accent-color);
+    border-radius: 2px;
+}
+
+/* Стили для инпутов с иконками */
+.input-with-icon {
+    position: relative;
+}
+
+.input-with-icon i {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--secondary-text-color);
+    pointer-events: none;
 }

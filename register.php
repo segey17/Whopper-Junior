@@ -15,18 +15,24 @@ if (isset($_SESSION['user_id'])) {
     <script src="js/theme.js" defer></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css ">
 </head>
-<body>
-<header>
-    <div class="logo">
-        <svg viewBox="0 0 24 24">
-            <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M17,7H7V5H17M17,9H7V11H17V9M7,13H13V15H7V13Z"/>
-        </svg>
-        Задачник
-    </div>
-</header>
+<body class="auth-page">
+<div class="auth-logo">
+  <div class="logo">
+    <svg viewBox="0 0 24 24">
+      <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M17,7H7V5H17M17,9H7V11H17V9M7,13H13V15H7V13Z"/>
+    </svg>
+    Задачник
+  </div>
+</div>
 <main>
     <div class="auth-container">
         <h2>Регистрация</h2>
+        <?php
+        if (isset($_SESSION['register_error'])) {
+            echo '<div class="error-message">' . htmlspecialchars($_SESSION['register_error']) . '</div>';
+            unset($_SESSION['register_error']); // Удалить ошибку из сессии после отображения
+        }
+        ?>
         <form action="api/auth.php?action=register" method="post">
             <div class="input-group">
                 <i class="fa-solid fa-user"></i>

@@ -16,6 +16,7 @@ $username = $_SESSION['username'] ?? 'Пользователь';
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="css/theme.css">
     <script src="js/theme.js" defer></script>
+    <script src="js/notifications.js" defer></script>
     <!-- Подключаем внешний JS файл -->
     <script src="js/edit_board.js" defer></script>
     <style>
@@ -38,19 +39,91 @@ $username = $_SESSION['username'] ?? 'Пользователь';
             font-size: 0.9em;
             cursor: pointer;
         }
+        /* Notification styles */
+        .notifications-container {
+            position: relative;
+            display: inline-block;
+            margin-right: 15px;
+        }
+        .notifications-icon {
+            cursor: pointer;
+            font-size: 1.5em;
+            position: relative;
+            user-select: none;
+        }
+        .notifications-badge {
+            position: absolute;
+            top: -5px;
+            right: -10px;
+            background-color: red;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 0.75em;
+            display: none;
+        }
+        .notifications-dropdown {
+            position: absolute;
+            right: 0;
+            top: 30px;
+            background: white;
+            border: 1px solid #ccc;
+            width: 300px;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+        .notifications-dropdown ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+        .notifications-dropdown ul li {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em;
+        }
+        .notifications-dropdown ul li:last-child {
+            border-bottom: none;
+        }
+        .notifications-button {
+            width: 100%;
+            padding: 8px;
+            border: none;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .notifications-button:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
 <header>
     <div class="logo">Задачник</div>
     <nav>
+        <div class="notifications-container">
+            <span id="notifications-icon" class="notifications-icon">🔔
+                <span id="notifications-badge" class="notifications-badge">0</span>
+            </span>
+            <div id="notifications-dropdown" class="notifications-dropdown">
+                <ul id="notifications-list">
+                    <!-- Notifications will be populated by JavaScript -->
+                </ul>
+                <button id="mark-all-as-read" class="notifications-button">Отметить все как прочитанные</button>
+            </div>
+        </div>
         <ul>
             <li><a href="dashboard.php">Доски</a></li>
             <?php /* if ($user_role === 'manager' || $user_role === 'developer'): ?>
                 <li><a href="admin.php">Админка</a></li>
             <?php endif; */ ?>
             <li><a href="logout.php">Выйти</a></li>
-            <li><button onclick="toggleTheme()">Сменить тему</button></li>
+            <li><button id="theme-toggle-button">Сменить тему</button></li>
             <li><span id="user-info">Привет, <?php echo htmlspecialchars($username); ?>!</span></li>
         </ul>
     </nav>

@@ -1,6 +1,7 @@
 <?php
 session_start();
-require '../db.php';
+require_once '../db.php';
+require_once __DIR__ . '/notifications_helper.php';
 
 // Исправленная проверка авторизации
 if (!isset($_SESSION['user_id'])) {
@@ -177,7 +178,24 @@ if ($action === 'add_member') {
 
     $insertStmt = $pdo->prepare("INSERT INTO board_members (board_id, user_id) VALUES (?, ?)");
     if ($insertStmt->execute([$board_id, $user_to_add_id])) {
-        echo json_encode(['success' => true, 'message' => 'Участник успешно добавлен']);
+        // Уведомление для добавленного участника
+        $initiator_username = $_SESSION['user']['username'] ?? 'Система'; // Имя текущего пользователя
+
+        // Получаем название доски
+        $stmtBoardTitle = $pdo->prepare("SELECT title FROM boards WHERE id = ?");
+        $stmtBoardTitle->execute([$board_id]);
+        $board_title = $stmtBoardTitle->fetchColumn();
+        $board_title_for_notification = $board_title ?: 'Неизвестная доска'; // Если название не найдено
+
+        $message = sprintf("%s добавил(а) вас на доску '%s'.",
+                            htmlspecialchars($initiator_username),
+                            htmlspecialchars($board_title_for_notification));
+
+        // Параметры для create_app_notification:
+        // $pdo, $initiator_user_id, $target_user_id, $board_id (для уведомления), $task_id (null), $message
+        create_app_notification($pdo, $current_user_id, $user_to_add_id, $board_id, null, $message);
+
+        echo json_encode(['success' => true, 'message' => 'Участник успешно добавлен.']);
     } else {
         http_response_code(500);
         echo json_encode(['error' => 'Ошибка добавления участника']);
@@ -192,7 +210,8 @@ if ($action === 'get') {
     // Публичные доски
     // Используем DISTINCT для избежания дубликатов, если доска публичная и пользователь в ней участник или владелец
     $stmt = $pdo->prepare("
-        SELECT DISTINCT b.*
+        SELECT DISTINCT b.*,
+               (b.owner_id = :current_user_id) as is_owner
         FROM boards b
         LEFT JOIN board_members bm ON b.id = bm.board_id
         WHERE b.is_private = 0

@@ -1,47 +1,117 @@
-/* Светлая тема по умолчанию */
 :root {
-    --bg-gradient: linear-gradient(135deg, #f4f4f4, #e0e7ff);
-    --bg-color: #f4f4f4;
-    --text-color: #333;
-    --header-bg: #3498db;
-    --header-text: #fff;
-    --heading-color: #222;
-    --header-link: #fff;
-    --header-link-hover: #e74c3c;
-    --card-bg: #fff;
-    --card-border: #ddd;
-    --card-title: #333;
-    --card-description: #777;
-    --button-bg: #3498db;
-    --button-text: #fff;
-    --button-hover: #2980b9;
-    --delete-bg: #e74c3c;
-    --delete-text: #fff;
-    --delete-hover: #c0392b;
-    --input-bg: #f9f9f9;
-    --error-color: #e74c3c;
+    --font-family: 'Inter', sans-serif;
+    /* Светлая тема */
+    --bg-color: #ffffff;
+    --bg-color-secondary: #f9fafb; /* Чуть темнее основного для выделения секций */
+    --card-bg: #ffffff;
+    --card-bg-hover: #f7f7f7;
+    --header-bg: rgba(255, 255, 255, 0.9);
+    --text-color: #1f2937;
+    --secondary-text-color: #6b7280;
+    --heading-color: #111827;
+    --accent-color: #3b82f6; /* Синий */
+    --accent-color-rgb: 59, 130, 246;
+    --accent-hue: 217; /* Оттенок для синего */
+    --accent-color-darker: #2563eb;
+    --accent-color-alt: #10b981; /* Изумрудный/зеленый */
+    --accent-color-alt-rgb: 16, 185, 129;
+    --accent-hue-alt: 160; /* Оттенок для зеленого */
+    --accent-color-darker-alt: #059669;
+    --button-bg: var(--accent-color); /* Добавлено */
+    --button-text: #ffffff;
+    --button-hover: #2563eb; /* Темнее синий для hover */
+    --button-alt-hover: #059669; /* Темнее зеленый для hover */
+    --subtle-border-color: #e5e7eb;
+    --card-title: #111827;
+    --input-bg: #f3f4f6;
+    --input-border: #d1d5db;
+    --input-focus-border: var(--accent-color);
+    --danger-color: #ef4444; /* Красный для ошибок/удаления */
+    --danger-color-hover: #dc2626; /* Новый цвет для hover состояния danger */
+    --warning-color: #f59e0b; /* Желтый для предупреждений */
+    --success-color: #10b981; /* Зеленый для успеха */
+
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --highlight-overlay: rgba(255, 255, 255, 0.1);
+
+    --status-pending-bg-start: #f4f4f4;
+    --status-pending-bg-end: #e0e7ff;
+    --status-inprogress-bg-start: #dfe9ff;
+    --status-inprogress-bg-end: #b3cfff;
+    --status-completed-bg-start: #c0fefe;
+    --status-completed-bg-end: #a0e6e6;
+    --priority-low-bg-start: #f4f4f4;
+    --priority-low-bg-end: #e0e7ff;
+    --priority-medium-bg-start: #dfe9ff;
+    --priority-medium-bg-end: #b3cfff;
+    --priority-high-bg-start: #c0fefe;
+    --priority-high-bg-end: #a0e6e6;
+
+    --input-icon-color: #8ca1c5;
+    --placeholder-color: #aab5c6;
+
+    /* Контрастный и красивый фон для страниц авторизации */
+    --auth-bg-start: #1c2536;
+    --auth-bg-end: #2a3444;
 }
 
-/* Темная тема */
 [data-theme="dark"] {
-    --bg-gradient: radial-gradient(circle at 10% 20%, #1e1e1e 0%, #121212 100%);
-    --bg-color: #121212;
-    --text-color: #e0e0e0;
-    --header-bg: #1e1e1e;
-    --header-text: #fff;
-    --heading-color: #fff;
-    --header-link: #3498db;
-    --header-link-hover: #e74c3c;
-    --card-bg: #1e1e1e;
-    --card-border: #333;
-    --card-title: #fff;
-    --card-description: #b3b3b3;
-    --button-bg: #3498db;
-    --button-text: #fff;
-    --button-hover: #2980b9;
-    --delete-bg: #e74c3c;
-    --delete-text: #fff;
-    --delete-hover: #c0392b;
-    --input-bg: #2c2c2c;
-    --error-color: #e74c3c;
+    /* Темная тема */
+    --bg-color: #111827; /* Очень темно-серый, почти черный */
+    --bg-color-secondary: #1f2937; /* Темно-серо-синий */
+    --card-bg: #1f2937;
+    --card-bg-hover: #2c3a4b;
+    --header-bg: rgba(31, 41, 55, 0.85); /* Полупрозрачный темно-серый */
+    --text-color: #f3f4f6; /* Светло-серый, почти белый */
+    --secondary-text-color: #9ca3af; /* Более тусклый серый */
+    --heading-color: #ffffff;
+    /* Акцентные цвета остаются теми же, если не указано иное */
+    --accent-color: #3b82f6; /* Синий акцент */
+    --accent-color-rgb: 59, 130, 246;
+    --accent-hue: 217;
+    --accent-color-darker: #1d4ed8; /* Немного другой темный синий для контраста на темном */
+    --accent-color-alt: #10b981;
+    --accent-color-alt-rgb: 16, 185, 129;
+    --accent-hue-alt: 160;
+    --accent-color-darker-alt: #047857;
+    --button-bg: var(--accent-color); /* Добавлено */
+    --button-text: #ffffff;
+    --button-hover: #1d4ed8; /* Темнее синий для hover на темной теме */
+    --button-alt-hover: #047857;
+    --subtle-border-color: #374151; /* Темнее для границ */
+    --card-title: #f3f4f6;
+    --input-bg: #374151;
+    --input-border: #4b5563;
+    --input-focus-border: var(--accent-color);
+    --danger-color: #ef4444;
+    --danger-color-hover: #b91c1c; /* Новый цвет для hover состояния danger в темной теме */
+    --warning-color: #f59e0b;
+    --success-color: #10b981;
+
+    --shadow-color: rgba(0, 0, 0, 0.2);
+    --highlight-overlay: rgba(255, 255, 255, 0.05);
+
+    --status-pending-bg-start: #3a3a3a;
+    --status-pending-bg-end: #4a5a7f;
+    --status-inprogress-bg-start: #4a5a7f;
+    --status-inprogress-bg-end: #5a7a9f;
+    --status-completed-bg-start: #3a7a7a;
+    --status-completed-bg-end: #4a9a9a;
+    --priority-low-bg-start: #3a3a3a;
+    --priority-low-bg-end: #4a5a7f;
+    --priority-medium-bg-start: #4a5a7f;
+    --priority-medium-bg-end: #5a7a9f;
+    --priority-high-bg-start: #3a7a7a;
+    --priority-high-bg-end: #4a9a9a;
+
+    --input-icon-color: #b0b8c4;
+    --placeholder-color: #7c8491;
+
+    /* Контрастный и красивый фон для страниц авторизации (тёмная тема) */
+    --auth-bg-start-dark: #192030;
+    --auth-bg-end-dark: #23283d;
 }

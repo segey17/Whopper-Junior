@@ -1,95 +1,445 @@
-/* Стили для индексной страницы */
-.hero {
-    text-align: center;
-    padding: 60px 20px;
-    background: linear-gradient(to right, var(--header-bg), var(--bg-color));
-    color: var(--header-text);
+/* Глобальные стили и сброс */
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    font-size: 16px;
 }
-.hero h1 {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 15px;
 }
-.hero p {
-    font-size: 1.2rem;
-    max-width: 600px;
-    margin: 0 auto 30px;
+
+/* Стили для header из style.css могут быть перенесены или адаптированы сюда, если они специфичны для лендинга */
+/* Для примера, если header используется только на лендинге */
+header {
+    background-color: var(--header-bg);
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--subtle-border-color);
+    position: sticky;
+    top: 0;
+    z-index: 1000; /* Чтобы был поверх другого контента */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-.features {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
-    padding: 40px 20px;
+
+header .logo {
+    font-size: 1.5rem; /* Немного уменьшил, если нужно */
+    font-weight: 600;
+    color: var(--heading-color);
+    display: flex;
+    align-items: center;
 }
-.feature-card {
-    background-color: var(--card-bg);
-    border-radius: 12px;
-    padding: 25px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: transform 0.2s ease;
+header .logo svg {
+    width: 24px;
+    height: 24px;
+    fill: var(--accent-color);
+    margin-right: 8px;
 }
-.feature-card:hover {
-    transform: translateY(-8px);
+
+header nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
 }
-.feature-icon {
-    font-size: 2rem;
-    color: var(--button-bg);
-    margin-bottom: 15px;
+header nav ul li {
+    margin-left: 20px;
 }
-.feature-title {
-    font-size: 1.2rem;
-    margin-bottom: 10px;
-    color: var(--card-title);
+header nav ul li a,
+header nav ul li button {
+    text-decoration: none;
+    color: var(--text-color); /* Для ссылок используем основной цвет текста */
+    font-weight: 500;
+    transition: color 0.3s ease;
+    padding: 8px 12px;
+    border-radius: 6px;
 }
-.feature-desc {
-    color: var(--card-description);
+header nav ul li a:hover,
+header nav ul li button:hover {
+    color: var(--accent-color);
+    background-color: var(--bg-color-secondary); /* Легкий фон при наведении */
 }
-.cta {
-    text-align: center;
-    padding: 40px 20px;
-}
-.cta button {
-    background-color: var(--button-bg);
+header nav ul li button {
+    background-color: var(--accent-color);
     color: var(--button-text);
-    padding: 12px 24px;
-    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+}
+header nav ul li button:hover {
+    background-color: var(--button-hover);
+    color: var(--button-text); /* Убедимся, что цвет текста не меняется на accent */
+}
+
+/* Hero Section */
+.hero {
+    /* Обновленный градиент для более динамичного вида */
+    background: var(--bg-color-secondary); /* Базовый цвет фона */
+    background-image:
+        radial-gradient(at 30% 10%, hsla(var(--accent-hue),60%,60%,.4) 0px, transparent 50%),
+        radial-gradient(at 70% 90%, hsla(var(--accent-hue),60%,50%,.3) 0px, transparent 50%),
+        linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color-secondary) 60%, var(--accent-color-darker) 120%);
+    color: var(--text-color);
+    padding: 120px 20px 100px; /* Увеличил вертикальные отступы */
+    text-align: center;
+    border-bottom: 1px solid var(--subtle-border-color);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero h1 {
+    font-size: 3.25rem; /* Еще немного увеличил */
+    font-weight: 700;
+    color: var(--heading-color);
+    margin-bottom: 25px;
+    line-height: 1.2;
+}
+
+.hero p {
+    font-size: 1.3rem;
+    color: var(--secondary-text-color);
+    max-width: 750px;
+    margin: 0 auto 45px;
+}
+
+/* Адаптивность для hero */
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: 2.25rem; /* Адаптивный размер */
+    }
+    .hero p {
+        font-size: 1.1rem;
+    }
+    .hero {
+        padding: 60px 20px;
+    }
+}
+
+/* Features Section */
+.features {
+    padding: 60px 0; /* Используем .container для боковых отступов */
+    background-color: var(--bg-color-secondary);
+}
+
+.features h2 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--heading-color);
+    margin-bottom: 40px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 30px;
+}
+
+.feature-card {
+    background-color: var(--card-bg); /* Используем переменную, определенную в theme.css */
+    border: 1px solid var(--subtle-border-color);
+    border-radius: 12px;
+    padding: 30px;
+    text-align: center; /* Иконку и заголовок лучше по центру */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.feature-icon {
+    font-size: 2.5rem; /* Увеличим иконку */
+    color: var(--accent-color);
+    margin-bottom: 20px;
+}
+
+.feature-title {
+    font-size: 1.25rem; /* Увеличим */
+    font-weight: 600;
+    color: var(--heading-color);
+    margin-bottom: 10px;
+}
+
+.feature-desc {
+    color: var(--secondary-text-color);
+    font-size: 0.95rem;
+}
+
+/* Call to Action (CTA) Section */
+.cta {
+    padding: 60px 20px;
+    text-align: center;
+    background-color: var(--bg-color); /* Может отличаться, если нужно выделить */
+}
+
+.cta h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--heading-color);
+    margin-bottom: 15px;
+}
+
+.cta p {
+    font-size: 1.1rem;
+    color: var(--secondary-text-color);
+    margin-bottom: 30px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.cta button, .hero .cta button /* Стили для кнопок CTA */
+ {
+    background-color: var(--accent-color);
+    color: var(--button-text);
+    padding: 15px 35px; /* Увеличил паддинги */
+    font-size: 1.1rem; /* Увеличил шрифт */
+    font-weight: 500;
     border-radius: 8px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    display: inline-block; /* Для корректной работы transform */
+    box-shadow: 0 4px 10px rgba(var(--accent-color-rgb, 59,130,246), 0.3); /* Тень для кнопки, нужна --accent-color-rgb */
 }
-.cta button:hover {
+
+.cta button:hover, .hero .cta button:hover {
     background-color: var(--button-hover);
-    transform: scale(1.05);
+    transform: translateY(-3px) scale(1.03);
 }
+
+/* Пример доски (можно переделать) */
 .example-board {
     max-width: 800px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: var(--card-bg);
+    margin: 40px auto; /* Уменьшил верхний/нижний отступ */
+    padding: 30px;
+    background-color: var(--bg-color-secondary);
+    border: 1px solid var(--subtle-border-color);
     border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
 }
+.example-board h2 {
+    text-align:center;
+    margin-bottom: 25px;
+    font-size: 1.8rem;
+}
+
 .example-task {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: var(--input-bg);
-    padding: 10px 15px;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    transition: background-color 0.3s;
-}
-.example-task:hover {
     background-color: var(--card-bg);
+    padding: 12px 18px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border: 1px solid var(--subtle-border-color);
+    transition: background-color 0.3s, transform 0.2s ease;
 }
+
+.example-task:hover {
+    background-color: var(--bg-color); /* Или другой цвет для ховера */
+    transform: translateX(5px);
+}
+
 .example-title {
     font-weight: 500;
     color: var(--card-title);
 }
+
 .example-status {
-    background-color: var(--button-bg);
+    background-color: var(--accent-color);
     color: var(--button-text);
-    padding: 4px 10px;
+    padding: 5px 12px;
+    border-radius: 20px; /* Более округлые */
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+/* Стили для секции с примером доски */
+.example-board-section {
+    padding: 60px 0;
+    background-color: var(--bg-color); /* Или --bg-color-secondary, если нужен контраст */
+}
+
+.example-board-section h2 {
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--heading-color);
+    margin-bottom: 10px; /* Уменьшил отступ под заголовком */
+}
+
+.example-board-section .section-subtitle {
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--secondary-text-color);
+    max-width: 700px;
+    margin: 0 auto 40px auto; /* Отступы для подзаголовка */
+}
+
+.example-board-container {
+    display: flex;
+    gap: 20px; /* Пространство между колонками */
+    background-color: var(--bg-color-secondary); /* Фон для всей области доски */
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.07);
+    overflow-x: auto; /* Позволит скроллить колонки по горизонтали, если их много */
+    min-height: 400px; /* Минимальная высота для наглядности */
+}
+
+.example-column {
+    flex: 1 1 300px; /* Колонки будут расти, сжиматься, базовая ширина 300px */
+    min-width: 280px; /* Минимальная ширина колонки */
+    background-color: var(--card-bg); /* Фон колонки, можно и --bg-color-secondary, если контейнер --bg-color */
+    border-radius: 8px;
+    padding: 15px;
+    border: 1px solid var(--subtle-border-color);
+    display: flex;
+    flex-direction: column; /* Карточки будут располагаться вертикально */
+    gap: 15px; /* Пространство между карточками */
+}
+.example-column:hover {
+    background-color: var(--card-bg-hover); /* Новая переменная для фона колонки при наведении */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+}
+
+.example-column-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--heading-color);
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid var(--subtle-border-color);
+}
+
+.example-task-card {
+    background-color: var(--bg-color); /* Фон карточки */
     border-radius: 6px;
-    font-size: 0.9rem;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+    border: 1px solid var(--subtle-border-color);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.example-task-card:hover {
+    transform: translateY(-5px) scale(1.02); /* Более заметный подъем и легкое увеличение */
+    box-shadow: 0 6px 15px rgba(0,0,0,0.12); /* Более выраженная тень */
+}
+
+.example-task-title {
+    font-weight: 500;
+    color: var(--card-title);
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+}
+
+.example-task-meta {
+    font-size: 0.8rem;
+    color: var(--secondary-text-color);
+    margin-bottom: 8px;
+}
+
+.example-task-tags {
+    margin-bottom: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+}
+
+.tag {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.tag-dev {
+    background-color: rgba(59, 130, 246, 0.1); /* Синий, с альфа-каналом */
+    color: #2563eb;
+}
+
+.tag-ux {
+    background-color: rgba(16, 185, 129, 0.1); /* Зеленый, с альфа-каналом */
+    color: #059669;
+}
+
+.example-task-progress {
+    height: 6px;
+    background-color: var(--accent-color);
+    border-radius: 3px;
+    margin-top: 10px; /* Отступ сверху для прогресс-бара */
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 30px 20px;
+    margin-top: 60px;
+    background-color: var(--bg-color);
+    color: var(--secondary-text-color);
+    border-top: 1px solid var(--subtle-border-color);
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    /* ... существующие стили для .hero ... */
+
+    .features-grid {
+        grid-template-columns: 1fr; /* Одна колонка для карточек фич */
+    }
+
+    .example-board-container {
+        flex-direction: column; /* Колонки доски встанут друг под другом */
+        min-height: auto; /* Убираем минимальную высоту, так как колонки будут растягиваться по содержимому */
+        padding: 15px; /* Уменьшаем внутренние отступы для мобильных */
+    }
+
+    .example-column {
+        min-width: unset; /* Сбрасываем минимальную ширину колонки */
+        flex-basis: auto; /* Позволяем колонке занимать всю доступную ширину */
+    }
+
+    header nav ul {
+        flex-direction: column; /* Элементы навигации в столбец */
+        align-items: flex-start; /* Выравнивание по левому краю */
+        gap: 10px; /* Промежуток между элементами */
+    }
+    header nav ul li {
+        margin-left: 0; /* Убираем левый отступ */
+    }
+    header .container {
+        flex-direction: column; /* Логотип и навигация в столбец */
+        align-items: flex-start;
+        gap: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero h1 {
+        font-size: 2rem; /* Еще меньше для очень маленьких экранов */
+    }
+    .hero p {
+        font-size: 1rem;
+    }
+    .cta button, .hero .cta button {
+        padding: 12px 25px;
+        font-size: 1rem;
+    }
+    .features h2, .cta h2, .example-board-section h2 {
+        font-size: 1.6rem;
+    }
+    .feature-card {
+        padding: 20px;
+    }
+    .feature-title {
+        font-size: 1.1rem;
+    }
 }
