@@ -92,3 +92,5 @@
 -   `api/notifications.php`: `action=get_unread`, `action=mark_as_read`, `action=mark_all_as_read`
 
 Ответы от API обычно в формате JSON.
+## 6. Развертывание
+В папке с основными файлами вызвать в терминале docker-compose up -d --build
