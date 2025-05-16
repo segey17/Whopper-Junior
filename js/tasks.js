@@ -1,15 +1,55 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const getPriorityClass = (priority) => {
+        switch (priority) {
+            case 'Высокий': return 'priority-high';
+            case 'Средний': return 'priority-medium';
+            case 'Низкий': return 'priority-low';
+            default: return 'priority-medium';
+        }
+    };
+
+    const getPriorityText = (priority) => {
+        return priority || 'Средний';
+    };
+
+    function truncateDescription(description, maxLength = 60) {
+        if (!description) return '';
+        if (description.length <= maxLength) return description;
+        return description.substring(0, maxLength) + '...';
+    }
+
     const boardId = new URLSearchParams(window.location.search).get('board_id');
     const taskForm = document.getElementById('createTaskForm');
     const taskMessage = document.getElementById('taskMessage'); // Для сообщений формы создания
     const toggleTaskButton = document.getElementById('toggleTaskFormButton');
     const taskBoardColumnsContainer = document.querySelector('.task-board-columns'); // Основной контейнер для колонок задач
     const roleDisplayElement = document.getElementById('current-user-board-role-display'); // Для отображения роли
+    const boardNameTitleElement = document.getElementById('boardNameTitle'); // Для имени доски
+
+    // Новые элементы для фильтров
+    const taskSearchInput = document.getElementById('taskSearchInput');
+    const priorityFilter = document.getElementById('priorityFilter');
+    const assigneeFilter = document.getElementById('assigneeFilter');
+    const cancelCreateTaskButton = document.getElementById('cancelCreateTask');
+
+    // Для модального окна редактирования (пока только объявление, заполнение в openEditModal)
+    const editTaskModal = document.getElementById('editTaskModal');
+    const editTaskForm = document.getElementById('editTaskForm');
+    const closeButton = editTaskModal ? editTaskModal.querySelector('.close-button') : null;
+    const editTaskProgressSlider = document.getElementById('editTaskProgressSlider');
+    const editTaskProgressInput = document.getElementById('editTaskProgress'); // input type number
+    const editProgressBarDisplay = document.getElementById('editProgressBar'); // div для отображения прогресса
+
+    let allTasks = []; // Массив для хранения всех задач с сервера
+    let currentUserRoleKey = ''; // Ключ роли текущего пользователя на доске
+    let boardMembers = []; // Массив для хранения участников доски
 
     // Инициализация Pusher
     let pusher = null;
     // boardIdFromPHP передается из tasks.php
     const currentBoardId = typeof boardIdFromPHP !== 'undefined' ? boardIdFromPHP : new URLSearchParams(window.location.search).get('board_id');
+    // currentUserIdFromPHP передается из tasks.php
+    const currentUserId = typeof currentUserIdFromPHP !== 'undefined' ? currentUserIdFromPHP : null;
 
     if (
         typeof Pusher !== 'undefined' &&
@@ -64,12 +104,6 @@ document.addEventListener('DOMContentLoaded', () => {
             handleTaskEvent('task_deleted', data);
         });
 
-        // Удаляем старые специфичные обработчики, если они были
-        // taskChannel.unbind('task_status_updated');
-        // taskChannel.unbind('task_priority_updated');
-        // taskChannel.unbind('task_deadline_updated');
-        // taskChannel.unbind('task_assigned');
-
         pusher.connection.bind('connected', () => {
             console.log('Pusher: Successfully connected on tasks page!');
         });
@@ -118,6 +152,61 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }, 500);
         }, 3000 + (type === 'error' ? 2000 : 0)); // Ошибки показываем дольше
+    }
+
+    // --- Новая функция для применения фильтров и рендеринга ---
+    function applyFiltersAndRender() {
+        if (!allTasks) return;
+
+        let filteredTasks = [...allTasks];
+        const searchTerm = taskSearchInput ? taskSearchInput.value.toLowerCase() : '';
+        const selectedPriority = priorityFilter ? priorityFilter.value : 'all';
+        const selectedAssignee = assigneeFilter ? assigneeFilter.value : 'all';
+
+        // Фильтр по поисковому запросу (название и описание)
+        if (searchTerm) {
+            filteredTasks = filteredTasks.filter(task =>
+                task.title.toLowerCase().includes(searchTerm) ||
+                (task.description && task.description.toLowerCase().includes(searchTerm))
+            );
+        }
+
+        // Фильтр по приоритету
+        if (selectedPriority !== 'all') {
+            filteredTasks = filteredTasks.filter(task => task.priority === selectedPriority);
+        }
+
+        // Фильтр по исполнителю
+        if (selectedAssignee === 'me' && currentUserId) {
+            filteredTasks = filteredTasks.filter(task => task.assigned_to_user_id && task.assigned_to_user_id.toString() === currentUserId.toString());
+        } else if (selectedAssignee === 'unassigned') {
+            filteredTasks = filteredTasks.filter(task => !task.assigned_to_user_id);
+        } else if (selectedAssignee !== 'all') { // конкретный пользователь
+            filteredTasks = filteredTasks.filter(task => task.assigned_to_user_id && task.assigned_to_user_id.toString() === selectedAssignee);
+        }
+
+        renderTasksInColumns(filteredTasks, currentUserRoleKey);
+        renderGanttChart(filteredTasks); // Диаграмма Ганта также должна использовать отфильтрованные задачи
+    }
+
+    // --- Слушатели событий для фильтров ---
+    if (taskSearchInput) {
+        taskSearchInput.addEventListener('input', applyFiltersAndRender);
+    }
+    if (priorityFilter) {
+        priorityFilter.addEventListener('change', applyFiltersAndRender);
+    }
+    if (assigneeFilter) {
+        assigneeFilter.addEventListener('change', applyFiltersAndRender);
+    }
+
+    // --- Кнопка отмены в форме создания задачи ---
+    if (cancelCreateTaskButton && taskForm) {
+        cancelCreateTaskButton.addEventListener('click', () => {
+            taskForm.style.display = 'none';
+            taskForm.reset();
+            if(taskMessage) taskMessage.textContent = '';
+        });
     }
 
     // --- Логика для формы создания задачи ---
@@ -183,10 +272,16 @@ document.addEventListener('DOMContentLoaded', () => {
                         taskMessage.style.color = 'green';
                     }
                     taskForm.reset();
-                    setTimeout(() => {
-                        if (taskForm) taskForm.style.display = 'none';
-                        loadTasks();
-                    }, 1000);
+                    // Не скрываем форму сразу, если пользователь захочет добавить еще
+                    // taskForm.style.display = 'none'; // Убрано, кнопка "Отмена" теперь для этого
+                    loadTasks(); // Обновит список и применит фильтры
+                    setTimeout(() => { // Очистка сообщения через некоторое время
+                        if(taskMessage) taskMessage.textContent = '';
+                         if (taskForm.style.display !== 'none') { // Если форма видима, скрываем
+                            // Можно оставить открытой для быстрого добавления новой или скрывать
+                            // taskForm.style.display = 'none';
+                         }
+                    }, 2000);
                 } else {
                     if(taskMessage) {
                         taskMessage.textContent = 'Ошибка: ' + (data.error || 'Неизвестная ошибка');
@@ -205,8 +300,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Функция отрисовки задач в колонках ---
-    function renderTasksInColumns(tasks, currentUserRoleKey) {
-        console.log("renderTasksInColumns called with tasks:", tasks, "and roleKey:", currentUserRoleKey);
+    function renderTasksInColumns(tasks, roleKey) {
+        console.log("renderTasksInColumns called with tasks:", tasks, "and roleKey:", roleKey);
         const statuses = ['В ожидании', 'В работе', 'Завершено'];
         statuses.forEach(status => {
             const list = document.querySelector(`.task-list[data-status-column="${status}"]`);
@@ -215,78 +310,107 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!tasks || !tasks.length) {
             const pendingList = document.querySelector('.task-list[data-status-column="В ожидании"]');
-            if (pendingList) {
-                pendingList.innerHTML = `<div class="empty-state">Нет задач.</div>`;
+            const inProgressList = document.querySelector('.task-list[data-status-column="В работе"]');
+            const completedList = document.querySelector('.task-list[data-status-column="Завершено"]');
+
+            let message = "Нет задач.";
+            if ((taskSearchInput && taskSearchInput.value) || (priorityFilter && priorityFilter.value !== 'all') || (assigneeFilter && assigneeFilter.value !== 'all')) {
+                message = "Нет задач, соответствующих вашим фильтрам.";
             }
+
+            if (pendingList) pendingList.innerHTML = `<div class="empty-state">${message}</div>`;
+            if (inProgressList && !inProgressList.hasChildNodes()) inProgressList.innerHTML = `<div class="empty-state"></div>`; // Для средних колонок можно просто пустоту
+            if (completedList && !completedList.hasChildNodes()) completedList.innerHTML = `<div class="empty-state"></div>`;
+
             renderGanttChart([]);
             return;
         }
 
         tasks.forEach(task => {
-            const deadlineDate = task.deadline ? task.deadline.split(' ')[0] : '';
             const card = document.createElement('div');
-            card.className = 'task-card';
+            card.className = 'task-card-modern'; // Новый класс для карточки
             card.setAttribute('draggable', true);
             card.dataset.taskId = task.id;
 
-            let assignedUserInfo = '';
+            const priorityClass = getPriorityClass(task.priority);
+            const priorityText = getPriorityText(task.priority);
+
+            let assignedUserHtml = '';
             if (task.assigned_username) {
-                assignedUserInfo = `<div class="assigned-user">Назначено: ${task.assigned_username}</div>`;
+                assignedUserHtml = `<div class="task-assignee"><i class="fas fa-user-circle"></i> ${task.assigned_username}</div>`;
             } else if (task.assigned_to_user_id) {
-                assignedUserInfo = `<div class="assigned-user">Назначено ID: ${task.assigned_to_user_id}</div>`;
+                assignedUserHtml = `<div class="task-assignee"><i class="fas fa-user-circle"></i> ID: ${task.assigned_to_user_id}</div>`;
             }
 
-            let progressIndicator = '';
+            let progressHtml = '';
             if (task.progress !== undefined && task.progress !== null) {
-                progressIndicator = `<div class="progress-bar-container">
-                                       <div class="progress-bar" style="width: ${task.progress}%;">${task.progress}%</div>
-                                   </div>`;
+                progressHtml = `
+                    <div class="task-progress-bar-container">
+                        <div class="task-progress-bar" style="width: ${task.progress}%;"></div>
+                    </div>
+                    <div class="task-progress-text">${task.progress}%</div>
+                `;
             }
+
+            let deadlineHtml = '';
+            if (task.deadline) {
+                const deadlineDate = new Date(task.deadline.split(' ')[0]);
+                const options = { day: 'numeric', month: 'short' };
+                const formattedDeadline = deadlineDate.toLocaleDateString('ru-RU', options);
+                deadlineHtml = `<div class="task-deadline"><i class="fas fa-calendar-alt"></i> ${formattedDeadline}</div>`;
+            }
+
 
             let actionButtons = '';
-            if (currentUserRoleKey === 'owner') {
+            if (roleKey === 'owner') {
                 actionButtons = `
-                    <button class="delete-button" data-id="${task.id}">Удалить</button>
-                    <button class="edit-button" data-id="${task.id}">Редактировать</button>
+                    <button class="task-action-btn edit-button" data-id="${task.id}" title="Редактировать"><i class="fas fa-edit"></i></button>
+                    <button class="task-action-btn delete-button" data-id="${task.id}" title="Удалить"><i class="fas fa-trash-alt"></i></button>
                 `;
-            } else if (currentUserRoleKey === 'participant_developer') {
-                actionButtons = `
-                    <button class="delete-button" data-id="${task.id}">Удалить</button>
-                    <button class="edit-button" data-id="${task.id}">Редактировать</button>
-                `;
+            } else if (roleKey === 'participant_developer') {
+                 actionButtons = `
+                    <button class="task-action-btn edit-button" data-id="${task.id}" title="Редактировать"><i class="fas fa-edit"></i></button>
+                 `;
             }
 
             card.innerHTML = `
-                <div class="title">${task.title}</div>
-                <div class="description">${task.description || '-'}</div>
-                ${assignedUserInfo}
-                ${progressIndicator}
-                <select class="status-select" data-id="${task.id}">
-                    <option value="В ожидании" ${task.status === 'В ожидании' ? 'selected' : ''}>В ожидании</option>
-                    <option value="В работе" ${task.status === 'В работе' ? 'selected' : ''}>В работе</option>
-                    <option value="Завершено" ${task.status === 'Завершено' ? 'selected' : ''}>Завершено</option>
-                </select>
-                <select class="priority-select" data-id="${task.id}">
-                    <option value="низкий" ${task.priority === 'низкий' ? 'selected' : ''}>Низкий</option>
-                    <option value="средний" ${task.priority === 'средний' ? 'selected' : ''}>Средний</option>
-                    <option value="высокий" ${task.priority === 'высокий' ? 'selected' : ''}>Высокий</option>
-                </select>
-                <input type="date" class="deadline-input" data-id="${task.id}" value="${deadlineDate}">
-                ${actionButtons}
+                <div class="task-card-modern-header">
+                    <h3 class="task-title">${task.title}</h3>
+                    <span class="task-priority-tag ${priorityClass}">${priorityText}</span>
+                </div>
+                <p class="task-description">${truncateDescription(task.description)}</p>
+                <div class="task-card-modern-meta">
+                    ${assignedUserHtml}
+                    ${deadlineHtml}
+                </div>
+                <div class="task-progress-section">
+                    ${progressHtml}
+                </div>
+                <div class="task-card-modern-footer">
+                    <select class="status-select-modern" data-id="${task.id}" ${roleKey === 'participant_developer' && task.assigned_to_user_id && task.assigned_to_user_id.toString() !== (currentUserId ? currentUserId.toString() : '') ? 'disabled' : ''}>
+                        <option value="В ожидании" ${task.status === 'В ожидании' ? 'selected' : ''}>В ожидании</option>
+                        <option value="В работе" ${task.status === 'В работе' ? 'selected' : ''}>В работе</option>
+                        <option value="Завершено" ${task.status === 'Завершено' ? 'selected' : ''}>Завершено</option>
+                    </select>
+                    <div class="task-actions">
+                        ${actionButtons}
+                    </div>
+                </div>
             `;
+
             const listContainer = document.querySelector(`.task-list[data-status-column="${task.status}"]`);
             if (listContainer) {
                 listContainer.appendChild(card);
             } else {
+                // Fallback to 'В ожидании' if somehow the column is not found (should not happen)
                 const pendingList = document.querySelector('.task-list[data-status-column="В ожидании"]');
                 if (pendingList) pendingList.appendChild(card);
             }
         });
         initializeDragAndDrop();
-        renderGanttChart(tasks);
     }
 
-    // --- Загрузка задач ---
+    // --- Модифицированная функция загрузки задач ---
     window.loadTasks = function() {
         if (!boardId) {
             if (taskBoardColumnsContainer) {
@@ -308,34 +432,59 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .then(responseData => {
                 if (typeof responseData === 'object' && responseData !== null && responseData.tasks && Array.isArray(responseData.tasks)) {
+                    allTasks = responseData.tasks; // Сохраняем все задачи
+                    currentUserRoleKey = responseData.currentUserEffectiveRoleKey; // Сохраняем роль
+
                     if (roleDisplayElement && responseData.currentUserEffectiveRoleOnBoard) {
                         roleDisplayElement.textContent = `Ваша роль на этой доске: ${responseData.currentUserEffectiveRoleOnBoard}`;
                     }
-                    renderTasksInColumns(responseData.tasks, responseData.currentUserEffectiveRoleKey);
+
+                    applyFiltersAndRender(); // Применяем фильтры и рендерим
+
+                    // Управляем видимостью кнопки "Добавить задачу" и формы
+                    if (toggleTaskButton && taskForm) {
+                        if (responseData.currentUserEffectiveRoleKey === 'owner') {
+                            toggleTaskButton.style.display = ''; // Показываем кнопку
+                        } else {
+                            toggleTaskButton.style.display = 'none'; // Скрываем кнопку
+                            taskForm.style.display = 'none';     // Также скрываем форму, если она была открыта
+                        }
+                    }
+
                 } else if (responseData && responseData.error) {
                     console.error('Ошибка от API при загрузке задач:', responseData.error);
-                    renderTasksInColumns([], null);
-                     const pendingList = document.querySelector('.task-list[data-status-column="В ожидании"]');
+                    allTasks = [];
+                    currentUserRoleKey = '';
+                    applyFiltersAndRender(); // Отобразит "Нет задач" или ошибку
+                    const pendingList = document.querySelector('.task-list[data-status-column="В ожидании"]');
                     if (pendingList) {
                         pendingList.innerHTML = `<div class="empty-state">Не удалось загрузить задачи: ${responseData.error}</div>`;
                     }
                     if (roleDisplayElement) roleDisplayElement.textContent = 'Не удалось определить роль.';
                 } else {
                     console.error('Ожидался объект с массивом задач, получено:', responseData);
-                    renderTasksInColumns([], null);
+                    allTasks = [];
+                    currentUserRoleKey = '';
+                    applyFiltersAndRender();
                     if (roleDisplayElement) roleDisplayElement.textContent = 'Ошибка загрузки данных о роли.';
                 }
             })
             .catch(error => {
                 console.error('Ошибка при загрузке задач:', error);
+                allTasks = [];
+                currentUserRoleKey = '';
+                applyFiltersAndRender(); // Отобразит "Нет задач" или ошибку
                 const pendingList = document.querySelector('.task-list[data-status-column="В ожидании"]');
                 if (pendingList) {
                     pendingList.innerHTML = `<div class="empty-state">Не удалось загрузить задачи: ${error.message}</div>`;
                 }
-                renderTasksInColumns([], null);
-                 if (roleDisplayElement) roleDisplayElement.textContent = 'Ошибка сети при загрузке роли.';
+                if (roleDisplayElement) roleDisplayElement.textContent = 'Ошибка сети при загрузке роли.';
             });
     }
+
+    // Изначально скрываем кнопку и форму, пока не загрузится роль
+    if (toggleTaskButton) toggleTaskButton.style.display = 'none';
+    if (taskForm) taskForm.style.display = 'none';
 
     // --- Делегирование событий для карточек ---
     if (taskBoardColumnsContainer) {
@@ -359,8 +508,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            if (target.classList.contains('edit-button')) {
-                const taskId = target.dataset.id;
+            if (target.classList.contains('edit-button') || target.closest('.edit-button')) {
+                const button = target.closest('.edit-button');
+                const taskId = button.dataset.id;
                 fetch(`api/tasks.php?action=get_details&task_id=${taskId}`)
                     .then(res => res.json())
                     .then(taskDetails => {
@@ -382,47 +532,29 @@ document.addEventListener('DOMContentLoaded', () => {
             const taskId = target.dataset.id;
             if (!taskId) return;
 
-            if (target.classList.contains('status-select')) {
+            // Обновление статуса из селекта на карточке
+            if (target.classList.contains('status-select') || target.classList.contains('status-select-modern')) {
                 const status = target.value;
-                const progress = status === 'В работе' ? 50 : (status === 'Завершено' ? 100 : 0);
+                // Предполагаем, что API handleProgress если не передан
+                // let progress = status === 'В работе' ? 50 : (status === 'Завершено' ? 100 : 0); // Прогресс лучше обновлять в модалке
                 fetch('api/tasks.php?action=update_status', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: parseInt(taskId), status, progress })
+                    body: JSON.stringify({ id: parseInt(taskId), status: status /*, progress: progress */ })
                 }).then(res => res.json()).then(data => {
-                    if (data.success) { /* loadTasks(); */ } else alert('Ошибка обновления статуса: ' + data.error);
+                    if (data.success) {
+                        // loadTasks(); // Обновление через Pusher, или если нет Pusher - раскомментировать
+                    } else {
+                        alert('Ошибка обновления статуса: ' + data.error);
+                        loadTasks(); // Перезагрузить, если ошибка, чтобы откатить UI
+                    }
                 });
             }
-
-            if (target.classList.contains('priority-select')) {
-                const priority = target.value;
-                fetch('api/tasks.php?action=update_details', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: parseInt(taskId), priority })
-                }).then(res => res.json()).then(data => {
-                    if (data.success) { /* loadTasks(); */ } else alert('Ошибка обновления приоритета: ' + data.error);
-                });
-            }
-
-            if (target.classList.contains('deadline-input')) {
-                const deadline = target.value;
-                fetch('api/tasks.php?action=update_details', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ id: parseInt(taskId), deadline: deadline === '' ? null : deadline })
-                }).then(res => res.json()).then(data => {
-                    if (data.success) { /* loadTasks(); */ } else alert('Ошибка обновления дедлайна: ' + data.error);
-                });
-            }
+            // Удалены обработчики для priority-select и deadline-input с карточки, т.к. они в модалке
         });
     }
 
     // --- Логика модального окна редактирования ---
-    const editTaskModal = document.getElementById('editTaskModal');
-    const editTaskForm = document.getElementById('editTaskForm');
-    const closeButton = editTaskModal ? editTaskModal.querySelector('.close-button') : null;
-
     window.openEditModal = function(task) {
         if (!editTaskModal || !editTaskForm) return;
         document.getElementById('editTaskId').value = task.id;
@@ -433,10 +565,25 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('editTaskDeadline').value = deadlineDate;
 
         const assignedUserInput = document.getElementById('editTaskAssignedUser');
+        // loadUsers() должен был уже заполнить этот select. Здесь мы просто устанавливаем значение.
         assignedUserInput.value = task.assigned_to_user_id || '';
         assignedUserInput.dataset.originalAssignedTo = task.assigned_to_user_id || '';
 
-        editTaskModal.style.display = 'flex';
+        // --- Инициализация поля прогресса ---
+        const progress = task.progress !== null && task.progress !== undefined ? parseInt(task.progress, 10) : 0;
+        if (editTaskProgressSlider) editTaskProgressSlider.value = progress;
+        if (editTaskProgressInput) editTaskProgressInput.value = progress;
+        if (editProgressBarDisplay) {
+            editProgressBarDisplay.style.width = progress + '%';
+            editProgressBarDisplay.textContent = progress + '%';
+        }
+
+        // Управляем доступностью полей прогресса в зависимости от статуса
+        const canEditProgress = task.status === 'В работе';
+        if (editTaskProgressSlider) editTaskProgressSlider.disabled = !canEditProgress;
+        if (editTaskProgressInput) editTaskProgressInput.disabled = !canEditProgress;
+
+        editTaskModal.style.display = 'flex'; // Используем flex для лучшего центрирования, если CSS это поддерживает
     }
 
     function closeEditModal() {
@@ -464,6 +611,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const newAssignedToIdString = assignedUserSelect.value;
             const originalAssignedToIdString = assignedUserSelect.dataset.originalAssignedTo || '';
 
+            // Получаем значение прогресса
+            const progress = editTaskProgressInput ? parseInt(editTaskProgressInput.value, 10) : null;
+
             if (!title) {
                 alert('Название задачи не может быть пустым.'); return;
             }
@@ -471,8 +621,12 @@ document.addEventListener('DOMContentLoaded', () => {
             const taskDetailsData = {
                 id: parseInt(taskId), title, description, priority,
                 deadline: deadline === '' ? null : deadline,
+                progress: (progress !== null && !isNaN(progress)) ? progress : undefined // Отправляем, если корректно
             };
 
+            console.log('Updating task details. Task ID:', taskId, 'Data to send:', taskDetailsData);
+
+            // Сначала обновляем основные детали (включая прогресс)
             fetch('api/tasks.php?action=update_details', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -516,10 +670,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    // --- Синхронизация слайдера и инпута прогресса в модалке ---
+    if (editTaskProgressSlider && editTaskProgressInput && editProgressBarDisplay) {
+        editTaskProgressSlider.addEventListener('input', () => {
+            const val = editTaskProgressSlider.value;
+            editTaskProgressInput.value = val;
+            editProgressBarDisplay.style.width = val + '%';
+            editProgressBarDisplay.textContent = val + '%';
+        });
+        editTaskProgressInput.addEventListener('input', () => {
+            let val = parseInt(editTaskProgressInput.value, 10);
+            if (isNaN(val)) val = 0;
+            if (val < 0) val = 0;
+            if (val > 100) val = 100;
+            editTaskProgressInput.value = val; // Корректируем значение в инпуте
+            editTaskProgressSlider.value = val;
+            editProgressBarDisplay.style.width = val + '%';
+            editProgressBarDisplay.textContent = val + '%';
+        });
+    }
+
     // --- Drag and Drop Logic ---
     let draggedItem = null;
     function initializeDragAndDrop() {
-        const taskCards = document.querySelectorAll('.task-card');
+        const taskCards = document.querySelectorAll('.task-card, .task-card-modern');
         const taskLists = document.querySelectorAll('.task-list');
 
         taskCards.forEach(card => {
@@ -543,32 +717,47 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.appendChild(draggedItem);
                     const taskId = draggedItem.dataset.taskId;
                     const newStatus = this.dataset.statusColumn;
-                    let progress = 0;
-                    if (newStatus === 'В работе') progress = 50;
-                    else if (newStatus === 'Завершено') progress = 100;
+
+                    // Определяем прогресс в зависимости от нового статуса
+                    let progressForStatusUpdate = 0;
+                    // Ищем текущий прогресс задачи, чтобы не сбрасывать его, если он уже есть и не 0 или 100
+                    const currentTask = allTasks.find(t => t.id.toString() === taskId);
+                    let newProgress = currentTask ? currentTask.progress : 0;
+
+                    if (newStatus === 'В ожидании') {
+                        newProgress = 0;
+                    } else if (newStatus === 'Завершено') {
+                        newProgress = 100;
+                    } else if (newStatus === 'В работе') {
+                        // Если задача перетаскивается в "В работе" и прогресс 0, ставим 10 (или 50).
+                        // Если уже есть прогресс (например, 25) и не 100, оставляем его.
+                        if (newProgress === 0 || newProgress === 100) {
+                           newProgress = 10; // или 50, если это стандарт
+                        }
+                    }
 
                     fetch('api/tasks.php?action=update_status', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ id: parseInt(taskId), status: newStatus, progress })
+                        body: JSON.stringify({ id: parseInt(taskId), status: newStatus, progress: newProgress })
                     })
                     .then(res => res.json())
                     .then(data => {
                         if (data.success) {
-                            const statusSelect = draggedItem.querySelector('.status-select');
+                            const statusSelect = draggedItem.querySelector('.status-select, .status-select-modern');
                             if(statusSelect) statusSelect.value = newStatus;
-                            const progressBar = draggedItem.querySelector('.progress-bar');
-                            const progressBarContainer = draggedItem.querySelector('.progress-bar-container');
+                            const progressBar = draggedItem.querySelector('.progress-bar, .task-progress-bar');
+                            const progressBarContainer = draggedItem.querySelector('.progress-bar-container, .task-progress-bar-container');
 
                             if (progressBar) {
-                                if (progress > 0) {
-                                    progressBar.style.width = progress + '%';
-                                    progressBar.textContent = progress + '%';
+                                if (newProgress > 0) {
+                                    progressBar.style.width = newProgress + '%';
+                                    progressBar.textContent = newProgress + '%';
                                 } else {
                                    if(progressBarContainer) progressBarContainer.innerHTML = '';
                                 }
-                            } else if (progress > 0 && progressBarContainer) {
-                                progressBarContainer.innerHTML = `<div class="progress-bar" style="width: ${progress}%;">${progress}%</div>`;
+                            } else if (newProgress > 0 && progressBarContainer) {
+                                progressBarContainer.innerHTML = `<div class="task-progress-bar" style="width: ${newProgress}%;">${newProgress}%</div>`;
                             }
                         } else {
                             alert('Ошибка обновления статуса: ' + data.error); loadTasks();
@@ -584,12 +773,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Логика диаграммы Ганта ---
-    function renderGanttChart(tasks) {
+    function renderGanttChart(tasksToRender) { // Принимает отфильтрованные задачи
         const ganttChartContainer = document.getElementById('gantt-chart');
         if (!ganttChartContainer || typeof Gantt === 'undefined') return;
         ganttChartContainer.innerHTML = '';
 
-        const ganttTasks = tasks.filter(task => task.created_at && task.deadline)
+        const ganttTasks = tasksToRender.filter(task => task.created_at && task.deadline)
             .map(task => {
                 const startDate = new Date(task.created_at.split(' ')[0]);
                 const endDate = new Date(task.deadline.split(' ')[0]);
@@ -620,59 +809,120 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- Функция загрузки пользователей для назначения ---
-    function loadUsers() {
-        const assignedUserSelect = document.getElementById('editTaskAssignedUser');
-        if (!assignedUserSelect) {
-            console.error('Элемент select для пользователей не найден');
+    // --- Функция загрузки пользователей для селектов назначения и фильтра ---
+    // (loadUsers была переименована/дополнена для ясности)
+    function loadBoardMembersAndPopulateSelects() {
+        const editAssignedUserSelect = document.getElementById('editTaskAssignedUser');
+        // assigneeFilter (для фильтра на странице) уже объявлен выше
+
+        if (!currentBoardId) {
+            if (editAssignedUserSelect) editAssignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
+            if (assigneeFilter) { // Очищаем и ставим дефолтные для фильтра
+                assigneeFilter.innerHTML = `
+                    <option value="all">Все пользователи</option>
+                    <option value="me">Мои задачи</option>
+                    <option value="unassigned">Неназначенные</option>
+                    <option value="" disabled>-- Нет участников --</option>`;
+            }
             return;
         }
 
-        // Настоящий board_id может быть из boardId (или currentBoardId)
-        const bId = boardId || currentBoardId;
-        if (!bId) {
-            assignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
-            return;
-        }
-
-        fetch(`api/boards.php?action=get_members&board_id=${bId}`)
+        fetch(`api/boards.php?action=get_members&board_id=${currentBoardId}`)
             .then(response => {
-                if (!response.ok) return response.json().then(e => { throw new Error(e.error || 'Ошибка API'); });
+                if (!response.ok) return response.json().then(e => { throw new Error(e.error || 'Ошибка API при загрузке участников'); });
                 return response.json();
             })
-            .then(members => {
-                assignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
-                if (Array.isArray(members) && members.length > 0) {
-                    // Исключаем владельца доски (user.is_owner === true || user.role === 'owner')
-                    members.filter(user => !user.is_owner && user.role !== 'owner').forEach(user => {
+            .then(membersData => {
+                boardMembers = Array.isArray(membersData) ? membersData : [];
+
+                // Заполнение селекта в модальном окне редактирования
+                if (editAssignedUserSelect) {
+                    editAssignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
+                    boardMembers.forEach(user => {
+                        // Возможно, здесь не нужно фильтровать владельца, т.к. задача может быть назначена и ему
                         const option = document.createElement('option');
                         option.value = user.id;
-                        option.textContent = user.username + (user.role ? ` (Роль: ${user.role})` : '');
-                        assignedUserSelect.appendChild(option);
+                        option.textContent = user.username + (user.role ? ` (${user.role})` : '');
+                        editAssignedUserSelect.appendChild(option);
                     });
-                    // Если после фильтрации никого нет — добавим вариант "-- Нет участников --"
-                    if (assignedUserSelect.options.length === 1) {
-                        const option = document.createElement('option');
-                        option.value = '';
-                        option.textContent = '-- Нет участников --';
-                        assignedUserSelect.appendChild(option);
+                    if (boardMembers.length === 0 && editAssignedUserSelect.options.length === 1) {
+                         editAssignedUserSelect.innerHTML += '<option value="" disabled>-- Нет участников --</option>';
                     }
-                } else {
-                    const option = document.createElement('option');
-                    option.value = '';
-                    option.textContent = '-- Нет участников --';
-                    assignedUserSelect.appendChild(option);
+                }
+
+                // Заполнение селекта фильтра исполнителей
+                if (assigneeFilter) {
+                    const currentAssigneeFilterValue = assigneeFilter.value; // Сохраняем текущее значение фильтра
+                    assigneeFilter.innerHTML = `
+                        <option value="all">Все пользователи</option>
+                        <option value="me">Мои задачи</option>
+                        <option value="unassigned">Неназначенные</option>`;
+                    if (boardMembers.length > 0) {
+                        assigneeFilter.innerHTML += '<option disabled>──────────</option>'; // Разделитель
+                        boardMembers.forEach(user => {
+                            const option = document.createElement('option');
+                            option.value = user.id;
+                            option.textContent = user.username;
+                            assigneeFilter.appendChild(option);
+                        });
+                    } else {
+                         assigneeFilter.innerHTML += '<option value="" disabled>-- Нет участников --</option>';
+                    }
+                    assigneeFilter.value = currentAssigneeFilterValue; // Восстанавливаем значение фильтра
                 }
             })
             .catch(error => {
                 console.error('Ошибка при загрузке участников доски:', error.message);
-                assignedUserSelect.innerHTML = '<option value="">-- Не назначен --</option>';
+                if (editAssignedUserSelect) editAssignedUserSelect.innerHTML = '<option value="">-- Ошибка загрузки --</option>';
+                if (assigneeFilter) {
+                    assigneeFilter.innerHTML = `
+                        <option value="all">Все пользователи</option>
+                        <option value="me">Мои задачи</option>
+                        <option value="unassigned">Неназначенные</option>
+                        <option value="" disabled>-- Ошибка загрузки --</option>`;
+                }
             });
     }
 
-    // Первоначальная загрузка задач, если boardId есть
-    if (boardId) {
-        loadTasks();
+    // --- Функция загрузки деталей доски (имя) ---
+    function loadBoardDetails() {
+        if (!currentBoardId || !boardNameTitleElement) return;
+
+        fetch(`api/boards.php?action=get_single&board_id=${currentBoardId}`) // Предполагаемый эндпоинт
+            .then(response => {
+                if (!response.ok) return response.json().then(e => { throw new Error(e.error || 'Ошибка API при загрузке деталей доски'); });
+                return response.json();
+            })
+            .then(data => {
+                if (data && data.name) {
+                    boardNameTitleElement.textContent = data.name;
+                    document.title = data.name + " - Задачи"; // Обновляем и title страницы
+                } else if (data && data.error) {
+                    console.warn("Не удалось загрузить имя доски:", data.error);
+                     boardNameTitleElement.textContent = "Задачи на доске"; // Фоллбэк
+                } else {
+                     boardNameTitleElement.textContent = "Задачи на доске"; // Фоллбэк
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при загрузке деталей доски:', error.message);
+                boardNameTitleElement.textContent = "Задачи на доске"; // Фоллбэк при ошибке сети
+            });
     }
-    loadUsers();
+
+    // Первоначальная загрузка
+    if (boardId) {
+        loadBoardDetails(); // Загружаем имя доски
+        loadBoardMembersAndPopulateSelects(); // Загружаем участников для фильтров и модалки
+        loadTasks(); // Загружаем задачи (это вызовет applyFiltersAndRender)
+    } else {
+        // Обработка случая, если boardId отсутствует
+        if (boardNameTitleElement) boardNameTitleElement.textContent = "Ошибка: ID доски не указан";
+        if (taskBoardColumnsContainer) taskBoardColumnsContainer.innerHTML = '<h1>ID доски не указан.</h1>';
+        // Скрываем фильтры и кнопку добавления, если нет ID доски
+        const filtersDiv = document.querySelector('.task-filters');
+        if(filtersDiv) filtersDiv.style.display = 'none';
+        if(toggleTaskButton) toggleTaskButton.style.display = 'none';
+    }
+    // loadUsers(); // Старый вызов, заменен на loadBoardMembersAndPopulateSelects()
 });

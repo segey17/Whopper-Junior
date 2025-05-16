@@ -1,8 +1,8 @@
 <?php
-$host = "localhost";
-$dbname = "task_manager";
-$user = "root";
-$password = "";
+$host = getenv('DB_HOST') ?: "db";
+$dbname = getenv('DB_DATABASE') ?: "task_manager";
+$user = getenv('DB_USERNAME') ?: "root";
+$password = getenv('DB_PASSWORD') ?: "";
 
 try {
     $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $user, $password);

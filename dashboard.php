@@ -34,18 +34,19 @@ $user_role = $_SESSION['user']['role'] ?? 'user'; // Теперь роль мо�
         <svg viewBox="0 0 24 24">
             <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M17,7H7V5H17M17,9H7V11H17V9M7,13H13V15H7V13Z"/>
         </svg>
-        Задачник
+        TaskJunior
     </div>
     <nav>
         <div class="notifications-container">
-            <span id="notifications-icon" class="notifications-icon">🔔
+            <span id="notifications-icon" class="notifications-icon">
+                <i class="fas fa-bell"></i>
                 <span id="notifications-badge" class="notifications-badge" style="display:none;">0</span>
             </span>
             <div id="notifications-dropdown" class="notifications-dropdown" style="display:none;">
                 <ul id="notifications-list">
                     <!-- Notifications will be populated by JavaScript -->
                 </ul>
-                <button id="mark-all-as-read" class="notifications-dropdown-button">Отметить все как прочитанные</button>
+                <button id="mark-all-as-read" class="notifications-button">Отметить все как прочитанные</button>
             </div>
         </div>
         <ul>
@@ -71,14 +72,6 @@ $user_role = $_SESSION['user']['role'] ?? 'user'; // Теперь роль мо�
             <div class="stat-card">
                 <div class="stat-value" id="total-boards">--</div>
                 <div class="stat-label">Всего досок</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="total-tasks">--</div>
-                <div class="stat-label">Активных задач</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value" id="completed-tasks">--</div>
-                <div class="stat-label">Выполнено задач</div>
             </div>
         </div>
     </div>

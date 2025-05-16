@@ -93,6 +93,31 @@ function doesUserExist($pdo, $userId) {
     return $stmt->fetchColumn() > 0;
 }
 
+// Получение роли пользователя на доске для проверок (кроме action 'get')
+// Эта функция будет вызываться внутри case, где нужен $board_id
+function getCurrentUserRoleOnBoard($pdo, $userId, $boardId) {
+    if (!$boardId) return 'viewer'; // Если нет ID доски, считаем гостем
+
+    $stmt_board_owner = $pdo->prepare("SELECT owner_id FROM boards WHERE id = :board_id");
+    $stmt_board_owner->execute(['board_id' => $boardId]);
+    $board_owner_id = $stmt_board_owner->fetchColumn();
+
+    if ($board_owner_id == $userId) {
+        return 'owner';
+    }
+
+    $stmt_check_member = $pdo->prepare("SELECT COUNT(*) FROM board_members WHERE board_id = :board_id AND user_id = :user_id");
+    $stmt_check_member->execute(['board_id' => $boardId, 'user_id' => $userId]);
+    if ($stmt_check_member->fetchColumn() > 0) {
+        return 'participant_developer';
+    }
+
+    // Если доска публичная, но пользователь не владелец и не участник - можно считать 'viewer'
+    // Но для простоты и безопасности, если не владелец и не участник, то нет особых прав
+    // Для случаев где checkBoardAccess разрешает (например публичные доски), роль все равно будет ниже owner/participant
+    return 'viewer'; // или 'public_viewer' или другой более специфичный ключ, если нужно
+}
+
 // --- Обработка действий ---
 
 switch ($action) {
@@ -179,6 +204,14 @@ switch ($action) {
             exit;
         }
 
+        // ПРОВЕРКА ПРАВ НА СОЗДАНИЕ ЗАДАЧИ: Только владелец доски может создавать задачи
+        $userRoleOnBoard = getCurrentUserRoleOnBoard($pdo, $currentUser['id'], $board_id);
+        if ($userRoleOnBoard !== 'owner') {
+            http_response_code(403); // Forbidden
+            echo json_encode(['error' => 'Только владелец доски может создавать задачи.']);
+            exit;
+        }
+
         $description = $requestData['description'] ?? '';
         $status = $requestData['status'] ?? 'В ожидании';
         $priority = $requestData['priority'] ?? 'средний';
@@ -225,7 +258,7 @@ switch ($action) {
         }
         break;
 
-    case 'update_details': // Обновление деталей задачи (title, description, priority, deadline)
+    case 'update_details': // Обновление деталей задачи (title, description, priority, deadline, progress)
         $taskId = $requestData['id'] ?? null;
         if (!$taskId) {
             http_response_code(400);
@@ -252,6 +285,8 @@ switch ($action) {
         if (isset($requestData['description'])) $requestedFieldsToUpdate['description'] = $requestData['description'];
         if (isset($requestData['priority'])) $requestedFieldsToUpdate['priority'] = $requestData['priority'];
         if (array_key_exists('deadline', $requestData)) $requestedFieldsToUpdate['deadline'] = $requestData['deadline'];
+        if (array_key_exists('progress', $requestData)) $requestedFieldsToUpdate['progress'] = $requestData['progress'];
+        if (array_key_exists('status', $requestData)) $requestedFieldsToUpdate['status'] = $requestData['status'];
 
         $sqlSetParts = [];
         $sqlParams = [];
@@ -268,11 +303,96 @@ switch ($action) {
                 }
             } elseif ($field === 'title' || $field === 'priority' || $field === 'deadline') {
                 if ($canEditAllDetails) {
-                    $sqlSetParts[] = "`{$field}` = ?"; // Обрамляем имена полей в кавычки на всякий случай
+                    $sqlSetParts[] = "`{$field}` = ?";
                     $sqlParams[] = ($field === 'deadline' && empty($value)) ? null : $value;
                 } else {
                     $hasUnauthorizedChanges = true; break;
                 }
+            }
+            // progress и status будут обработаны ниже централизованно
+        }
+
+        // Дополнительная логика для синхронизации progress и status
+        $final_progress = null;
+        $final_status = null;
+
+        if (array_key_exists('progress', $requestedFieldsToUpdate)) {
+            $p_val = $requestedFieldsToUpdate['progress'];
+            if ($p_val !== null && is_numeric($p_val)) {
+                $final_progress = intval($p_val);
+                if ($final_progress < 0) $final_progress = 0;
+                if ($final_progress > 100) $final_progress = 100;
+            }
+        } else {
+            $final_progress = $task['progress'];
+        }
+
+        if (array_key_exists('status', $requestedFieldsToUpdate)) {
+            $final_status = $requestedFieldsToUpdate['status'];
+        } else {
+            $final_status = $task['status'];
+        }
+
+        // Синхронизация
+        if ($final_progress === 100) {
+            $final_status = 'Завершено';
+        } elseif ($final_status === 'Завершено') {
+            $final_progress = 100;
+        } elseif ($final_status === 'В ожидании') {
+            $final_progress = 0;
+        } elseif ($final_progress > 0 && $final_progress < 100 && $final_status !== 'В работе') {
+            $final_status = 'В работе';
+        }
+
+        $changed_fields_summary = [];
+        if (isset($requestedFieldsToUpdate['title']) && $canEditAllDetails && $task['title'] !== $requestedFieldsToUpdate['title']) {
+            $changed_fields_summary[] = "название изменено на '" . htmlspecialchars($requestedFieldsToUpdate['title']) . "'";
+            $task_title_for_notification = $requestedFieldsToUpdate['title'];
+        } else {
+            $task_title_for_notification = $task['title'];
+        }
+        if (isset($requestedFieldsToUpdate['description']) && ($canEditAllDetails || $isAssignedUser) && $task['description'] !== $requestedFieldsToUpdate['description']) {
+            $changed_fields_summary[] = "описание обновлено";
+        }
+        if (isset($requestedFieldsToUpdate['priority']) && $canEditAllDetails && $task['priority'] !== $requestData['priority']) {
+            $changed_fields_summary[] = "приоритет изменен на '" . htmlspecialchars($requestedFieldsToUpdate['priority']) . "'";
+        }
+        if (array_key_exists('deadline', $requestedFieldsToUpdate) && $canEditAllDetails) {
+            $new_deadline_value = !empty($requestedFieldsToUpdate['deadline']) ? $requestedFieldsToUpdate['deadline'] : null;
+            if ($task['deadline'] !== $new_deadline_value) {
+                 $deadline_text = $new_deadline_value ? "дедлайн изменен на '" . htmlspecialchars($new_deadline_value) . "'" : "дедлайн удален";
+                 $changed_fields_summary[] = $deadline_text;
+            }
+        }
+
+        // Пересобираем $sqlSetParts и $sqlParams с учетом $final_progress и $final_status
+        // (нужно проверить, изменились ли они относительно $task['progress'] и $task['status'])
+        if ($task['progress'] != $final_progress) {
+            // Удаляем 'progress = ?' из $sqlSetParts, если был добавлен ранее
+            foreach ($sqlSetParts as $key => $part) {
+                if (strpos($part, 'progress = ?') !== false) {
+                    unset($sqlSetParts[$key]);
+                    unset($sqlParams[$key]);
+                }
+            }
+            $sqlSetParts[] = "progress = ?";
+            $sqlParams[] = $final_progress;
+            if (!in_array("прогресс изменен на '".$final_progress."%'", $changed_fields_summary) && $final_progress !== null) {
+                $changed_fields_summary[] = "прогресс изменен на '".$final_progress."%'";
+            }
+        }
+        if ($task['status'] != $final_status) {
+            // Удаляем 'status = ?' из $sqlSetParts, если был добавлен ранее
+            foreach ($sqlSetParts as $key => $part) {
+                if (strpos($part, 'status = ?') !== false) {
+                    unset($sqlSetParts[$key]);
+                    unset($sqlParams[$key]);
+                }
+            }
+            $sqlSetParts[] = "status = ?";
+            $sqlParams[] = $final_status;
+            if (!in_array("статус изменен на '".htmlspecialchars($final_status)."'", $changed_fields_summary)) {
+                $changed_fields_summary[] = "статус изменен на '".htmlspecialchars($final_status)."'";
             }
         }
 
@@ -296,27 +416,7 @@ switch ($action) {
             // Уведомления об изменении деталей
             $initiator_username = $currentUser['username'] ?? 'Пользователь';
             $original_assigned_user_id = $task['assigned_to_user_id'];
-            $task_title_for_notification = $task['title']; // Используем название задачи до возможного изменения
             $board_id_for_notification = $task['task_board_id'];
-
-            $changed_fields_summary = [];
-            if (isset($requestedFieldsToUpdate['title']) && $canEditAllDetails && $task['title'] !== $requestedFieldsToUpdate['title']) {
-                $changed_fields_summary[] = "название изменено на '" . htmlspecialchars($requestedFieldsToUpdate['title']) . "'";
-                $task_title_for_notification = $requestedFieldsToUpdate['title']; // Обновляем для последующих сообщений, если имя сменилось
-            }
-            if (isset($requestedFieldsToUpdate['description']) && ($canEditAllDetails || $isAssignedUser) && $task['description'] !== $requestedFieldsToUpdate['description']) {
-                $changed_fields_summary[] = "описание обновлено";
-            }
-            if (isset($requestedFieldsToUpdate['priority']) && $canEditAllDetails && $task['priority'] !== $requestedFieldsToUpdate['priority']) {
-                $changed_fields_summary[] = "приоритет изменен на '" . htmlspecialchars($requestedFieldsToUpdate['priority']) . "'";
-            }
-            if (array_key_exists('deadline', $requestedFieldsToUpdate) && $canEditAllDetails) {
-                $new_deadline_value = !empty($requestedFieldsToUpdate['deadline']) ? $requestedFieldsToUpdate['deadline'] : null;
-                if ($task['deadline'] !== $new_deadline_value) {
-                     $deadline_text = $new_deadline_value ? "дедлайн изменен на '" . htmlspecialchars($new_deadline_value) . "'" : "дедлайн удален";
-                     $changed_fields_summary[] = $deadline_text;
-                }
-            }
 
             if (!empty($changed_fields_summary) && $original_assigned_user_id && $original_assigned_user_id != $currentUser['id']) {
                 // Получаем название доски
@@ -326,7 +426,7 @@ switch ($action) {
 
                 $notification_message = sprintf("%s обновил(а) задачу '%s' на доске '%s': %s.",
                     htmlspecialchars($initiator_username),
-                    htmlspecialchars($task_title_for_notification), // Используем актуальное название задачи
+                    htmlspecialchars($task_title_for_notification),
                     htmlspecialchars($board_title),
                     implode(", ", $changed_fields_summary)
                 );
@@ -343,7 +443,6 @@ switch ($action) {
                 global $pusher;
                 $pusher->trigger('task-events', 'task_updated', $updatedTaskDataDetails);
             }
-
 
             echo json_encode(['success' => true, 'message' => 'Детали задачи успешно обновлены.']);
         } catch (PDOException $e) {
@@ -424,9 +523,45 @@ switch ($action) {
     case 'update_status': // Обновление статуса и прогресса задачи
         $taskId = $requestData['id'] ?? null;
         $newStatus = $requestData['status'] ?? null;
-        // Прогресс может быть не передан, если он вычисляется на фронте или не меняется
-        $newProgress = array_key_exists('progress', $requestData) ? (int)$requestData['progress'] : null;
+        $newProgress = array_key_exists('progress', $requestData) ? $requestData['progress'] : null;
 
+        if ($newProgress !== null && is_numeric($newProgress)) {
+            $newProgress = intval($newProgress);
+            if ($newProgress < 0) $newProgress = 0;
+            if ($newProgress > 100) $newProgress = 100;
+        } else {
+            // Если прогресс не передан или некорректен, вычисляем его на основе статуса
+            if ($newStatus === 'Завершено') {
+                $newProgress = 100;
+            } elseif ($newStatus === 'В ожидании') {
+                $newProgress = 0;
+            } else { // В работе или другой статус
+                // Если был предыдущий прогресс и он не 0 и не 100, оставляем его
+                // Иначе (если был 0 или 100, или не было), ставим например 10%
+                $taskForProgress = getTaskDetails($pdo, $taskId); // Нужно получить текущий прогресс
+                if ($taskForProgress && $taskForProgress['progress'] > 0 && $taskForProgress['progress'] < 100 && $newStatus === 'В работе') {
+                     $newProgress = $taskForProgress['progress'];
+                } elseif ($newStatus === 'В работе') {
+                     $newProgress = 10; // или другое значение по умолчанию для "В работе"
+                } else {
+                     $newProgress = null; // Не меняем, если статус не ясен или прогресс не определен
+                }
+            }
+        }
+
+        // Синхронизация: если прогресс 100, статус должен быть "Завершено"
+        if ($newProgress === 100) {
+            $newStatus = 'Завершено';
+        } elseif ($newStatus === 'Завершено' && $newProgress !== 100) { // Если статус "Завершено", но прогресс не 100
+            $newProgress = 100;
+        } elseif ($newStatus === 'В ожидании' && $newProgress !== 0) { // Если статус "В ожидании", но прогресс не 0
+            $newProgress = 0;
+        } elseif ($newStatus === 'В работе' && $newProgress === 100) { // Нелогично: В работе и 100%
+            $newStatus = 'Завершено'; // Приводим к Завершено
+        } elseif ($newStatus === 'В работе' && $newProgress === 0 && ($taskForProgress && $taskForProgress['status'] !== 'В ожидании') ) {
+            // Если прогресс стал 0, но статус "В работе" (и не был "В ожидании"), возможно, вернуть "В ожидании"
+            // $newStatus = 'В ожидании'; // Это может быть спорно, оставляем как есть, если юзер сам поставил 0
+        }
 
         if (!$taskId || $newStatus === null) {
             echo json_encode(['error' => 'ID задачи и новый статус обязательны']);
@@ -449,12 +584,21 @@ switch ($action) {
             exit;
         }
 
-        $updateFields = ['status = ?'];
-        $params = [$newStatus];
+        $updateFields = [];
+        $params = [];
 
-        if ($newProgress !== null) {
+        if ($newStatus !== null) {
+            $updateFields[] = 'status = ?';
+            $params[] = $newStatus;
+        }
+        if ($newProgress !== null) { // Обновляем прогресс только если он определен
             $updateFields[] = 'progress = ?';
             $params[] = $newProgress;
+        }
+
+        if (empty($updateFields)) {
+            echo json_encode(['success' => true, 'message' => 'Нет данных для обновления статуса или прогресса.']);
+            exit;
         }
         $params[] = $taskId;
 

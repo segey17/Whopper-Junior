@@ -59,11 +59,11 @@ if ($auth_action === 'register') {
         exit();
     }
 
-    if (strlen($password) < 6) {
-         $_SESSION['register_error'] = "Пароль должен быть не менее 6 символов.";
-         header("Location: ../register.php");
-         exit();
-    }
+    // if (strlen($password) < 6) {
+    //     $_SESSION['register_error'] = "Пароль должен быть не менее 6 символов.";
+    //     header("Location: ../register.php");
+    //     exit();
+    // }
 
     $hashed_password = password_hash($password, PASSWORD_DEFAULT);
 

@@ -12,8 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Статистика
     const totalBoardsElement = document.getElementById('total-boards');
-    const totalTasksElement = document.getElementById('total-tasks');
-    const completedTasksElement = document.getElementById('completed-tasks');
 
     // Состояние
     let allBoards = [];
@@ -30,8 +28,6 @@ document.addEventListener('DOMContentLoaded', () => {
         typeof PUSHER_APP_KEY !== 'undefined' && PUSHER_APP_KEY &&
         typeof PUSHER_APP_CLUSTER !== 'undefined' && PUSHER_APP_CLUSTER
     ) {
-        // Убираем условие if (PUSHER_APP_KEY !== 'dbe89bd713c5f93e5e19'),
-        // чтобы Pusher инициализировался, если ключи просто предоставлены.
         pusher = new Pusher(PUSHER_APP_KEY, {
             cluster: PUSHER_APP_CLUSTER
         });
@@ -60,8 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
         boardChannel.bind('member_added', function(data) {
             console.log('Pusher: member_added', data);
             showToast(`Пользователь ${data.username} добавлен на доску ID: ${data.board_id}`, 'info');
-            // Тут может потребоваться обновить информацию о доске, если она отображает участников
-            // Для простоты пока просто перезагружаем все доски
             loadBoards();
         });
 
@@ -79,32 +73,31 @@ document.addEventListener('DOMContentLoaded', () => {
         taskChannel.bind('task_created', function(data) {
             console.log('Pusher: task_created', data);
             showToast(`Новая задача создана: ${data.title}`, 'success');
-            loadStats(); // Обновляем статистику
             // Если бы задачи были на этой странице, мы бы обновили и их список
         });
 
         taskChannel.bind('task_status_updated', function(data) {
             console.log('Pusher: task_status_updated', data);
             showToast(`Статус задачи (ID: ${data.id}) обновлен`, 'info');
-            loadStats(); // Обновляем статистику
+            //
         });
 
         taskChannel.bind('task_priority_updated', function(data) {
             console.log('Pusher: task_priority_updated', data);
             showToast(`Приоритет задачи (ID: ${data.id}) обновлен`, 'info');
-            loadStats();
+            //
         });
 
         taskChannel.bind('task_deadline_updated', function(data) {
             console.log('Pusher: task_deadline_updated', data);
             showToast(`Дедлайн задачи (ID: ${data.id}) обновлен`, 'info');
-            loadStats();
+            //
         });
 
         taskChannel.bind('task_deleted', function(data) {
             console.log('Pusher: task_deleted', data);
             showToast(`Задача (ID: ${data.id}) удалена`, 'info');
-            loadStats(); // Обновляем статистику
+            //
         });
 
         pusher.connection.bind('connected', () => {
@@ -120,7 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast('Ошибка подключения к системе обновлений.', 'error');
             }
         });
-        // Убираем блок else, который выводил предупреждение о плейсхолдере
     } else {
         console.warn('Pusher: SDK not loaded or PUSHER_APP_KEY/PUSHER_APP_CLUSTER are not defined or are empty. Realtime updates disabled.');
         showToast('Система обновлений в реальном времени не настроена (ключи не указаны или пусты).', 'warning');
@@ -252,26 +244,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Загрузка статистики
     function loadStats() {
-        if (!totalBoardsElement || !totalTasksElement || !completedTasksElement) return;
+        if (!totalBoardsElement) return;
 
         // Счетчик досок - из текущих данных
         totalBoardsElement.textContent = allBoards.length;
-
-        // Загрузка статистики по задачам
-        fetch('api/tasks.php?action=stats')
-            .then(res => res.json())
-            .then(stats => {
-                if (stats && typeof stats === 'object') {
-                    totalTasksElement.textContent = stats.total || '0';
-                    completedTasksElement.textContent = stats.completed || '0';
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка загрузки статистики:', error);
-                totalTasksElement.textContent = allBoards.length;
-                totalTasksElement.textContent = '-';
-                completedTasksElement.textContent = '-';
-            });
     }
 
     // Отрисовка досок

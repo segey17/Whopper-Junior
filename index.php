@@ -8,9 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css ">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/landing-page.css">
+    <script src="js/theme.js" defer></script>
 </head>
-<body>
-    <script src="js/theme.js"></script>
 <body>
     <header>
         <div class="container" style="display: flex; justify-content: space-between; align-items: center;">
@@ -18,7 +17,7 @@
                 <svg viewBox="0 0 24 24">
                     <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M17,7H7V5H17M17,9H7V11H17V9M7,13H13V15H7V13Z"/>
                 </svg>
-                Задачник
+                TaskJunior
             </div>
             <nav>
                 <ul>
@@ -123,10 +122,9 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2025 Задачник. Все права защищены.</p>
+            <p>&copy; 2025 TaskJunior. Все права защищены.</p>
             <!-- Можно добавить еще ссылок: <a href="#">Политика</a> | <a href="#">Условия</a> -->
         </div>
     </footer>
-    <script src="js/theme.js" defer></script>
 </body>
 </html>
