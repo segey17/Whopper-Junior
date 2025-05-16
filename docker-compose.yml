@@ -6,21 +6,14 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8080:80" # Порт хоста:порт контейнера
+      - "8080:80"
     volumes:
-      - .:/var/www/html # Синхронизация файлов для разработки
+      - .:/var/www/html
     environment:
-      # Замените на ваши реальные данные или используйте .env файл
       DB_HOST: db
       DB_DATABASE: my_app_db
       DB_USERNAME: my_app_user
       DB_PASSWORD: my_app_password
-      # Добавьте другие переменные окружения, если необходимо
-      # Например, для Pusher:
-      # PUSHER_APP_ID: "your_pusher_app_id"
-      # PUSHER_APP_KEY: "your_pusher_app_key"
-      # PUSHER_APP_SECRET: "your_pusher_app_secret"
-      # PUSHER_APP_CLUSTER: "your_pusher_app_cluster"
     depends_on:
       - db
     networks:
@@ -30,20 +23,20 @@ services:
     container_name: taskmanager-db
     image: mysql:8.0
     ports:
-      - "3306:3306" # Опционально, если нужен доступ к БД с хоста напрямую
+      - "3306:3306" 
     environment:
-      MYSQL_ROOT_PASSWORD: root_password # Измените на надежный пароль
+      MYSQL_ROOT_PASSWORD: root_password 
       MYSQL_DATABASE: my_app_db
       MYSQL_USER: my_app_user
       MYSQL_PASSWORD: my_app_password
     volumes:
       - db_data:/var/lib/mysql
-      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql # Монтируем schema.sql
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql 
     networks:
       - app-network
 
 volumes:
-  db_data: # Именованный том для сохранения данных MySQL
+  db_data: 
 
 networks:
   app-network:
